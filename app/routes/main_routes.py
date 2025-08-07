@@ -166,7 +166,7 @@ def download_image(filename):
         format = request.args.get('format', 'JPEG').upper()
         quality = int(request.args.get('quality', 95))
         
-        # Check if file exists
+        # Check if file exists in processed folder
         processed_path = os.path.join(current_app.config['PROCESSED_FOLDER'], filename)
         
         if not os.path.exists(processed_path):

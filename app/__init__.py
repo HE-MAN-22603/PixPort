@@ -27,9 +27,11 @@ def create_app():
     # Register blueprints
     from .routes.main_routes import main_bp
     from .routes.process_routes import process_bp
+    from .routes.static_routes import static_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(process_bp, url_prefix='/process')
+    app.register_blueprint(static_bp, url_prefix='/static')
     
     # Ensure upload directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

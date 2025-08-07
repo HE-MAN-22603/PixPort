@@ -70,3 +70,16 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+temp/
+tmp/
+
+# Railway
+.railway/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Node modules (if any)
+node_modules/
