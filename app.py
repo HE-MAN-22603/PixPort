@@ -20,20 +20,22 @@ app = create_app()
 def ensure_models():
     """Ensure AI models are available"""
     try:
+        print('Checking AI models...')
         from rembg import new_session
         # Test if models are available
         session = new_session('u2net')
-        logger.info('AI models are ready') if 'logger' in locals() else None
+        print('✅ AI models are ready')
+        if 'logger' in locals():
+            logger.info('AI models are ready')
+        return True
     except Exception as e:
-        print(f'Downloading AI models: {e}')
-        try:
-            import subprocess
-            subprocess.run(['python', 'download_models.py'], check=True)
-        except Exception as download_error:
-            print(f'Model download error: {download_error}')
+        print(f'⚠️ AI models not ready: {e}')
+        print('Models will be downloaded when first needed')
+        return False
 
-# Ensure models are available on startup
-ensure_models()
+# Only try to ensure models if not in Railway startup
+if not os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
+    ensure_models()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

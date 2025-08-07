@@ -15,11 +15,20 @@ def index():
 @main_bp.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'PixPort',
-        'version': '1.0.0'
-    })
+    try:
+        import time
+        return jsonify({
+            'status': 'healthy',
+            'service': 'PixPort',
+            'version': '1.0.0',
+            'timestamp': int(time.time()),
+            'environment': 'railway' if os.environ.get('RAILWAY_ENVIRONMENT_NAME') else 'local'
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
 
 @main_bp.route('/status')
 def status():
