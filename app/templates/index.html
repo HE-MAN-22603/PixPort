@@ -1,0 +1,335 @@
+{% extends "layout.html" %}
+
+{% block title %}PixPort - AI Passport Photo Maker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="gradient-text">AI-Powered</span> 
+                    Passport Photos
+                </h1>
+                <p class="hero-subtitle">
+                    Create professional-quality passport photos in seconds with our advanced AI technology. 
+                    Background removal, enhancement, and perfect sizing - all in one place.
+                </p>
+                
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Background Removal</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-palette"></i>
+                        <span>Smart Color Correction</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                        <span>Perfect Sizing</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-bolt"></i>
+                        <span>Lightning Fast</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-upload">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Upload Your Photo</h3>
+                        <p>Drag and drop your photo here or click to browse</p>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                        <button type="button" class="btn btn-primary" id="browse-btn">
+                            <i class="fas fa-folder-open"></i> Browse Files
+                        </button>
+                        
+                        <div class="upload-info">
+                            <small>Supported formats: JPG, PNG, HEIC • Max size: 16MB</small>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-progress hidden" id="upload-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <p class="progress-text" id="progress-text">Uploading...</p>
+                    </div>
+                </div>
+                
+                <div class="upload-demo">
+                    <p>Try with sample photo:</p>
+                    <div class="demo-images">
+                        <img src="/static/images/demo1.jpg" alt="Demo 1" class="demo-image" onclick="useDemoImage(this)">
+                        <img src="/static/images/demo2.jpg" alt="Demo 2" class="demo-image" onclick="useDemoImage(this)">
+                        <img src="/static/images/demo3.jpg" alt="Demo 3" class="demo-image" onclick="useDemoImage(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-icon">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <h3>Upload Your Photo</h3>
+                <p>Simply drag and drop your photo or browse from your device. We accept JPG, PNG, and HEIC formats.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-icon">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <h3>AI Processing</h3>
+                <p>Our advanced AI automatically removes the background, enhances quality, and optimizes your photo.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3>Customize</h3>
+                <p>Choose background color, apply enhancements, and resize to meet passport requirements for any country.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <h3>Download</h3>
+                <p>Get your professional passport photo instantly, ready for printing or digital submission.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Highlight -->
+<section class="features-highlight">
+    <div class="container">
+        <h2 class="section-title">Why Choose PixPort?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3>Advanced AI Technology</h3>
+                <p>Our state-of-the-art AI models ensure precise background removal and professional results every time.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <h3>Global Standards</h3>
+                <p>Support for 60+ international passport photo requirements including US, EU, UK, and Asian standards.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Privacy & Security</h3>
+                <p>Your photos are processed securely and automatically deleted after 24 hours. Your privacy is our priority.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Instant Results</h3>
+                <p>Get your professional passport photo in seconds, not minutes. Fast processing without compromising quality.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Mobile Friendly</h3>
+                <p>Works perfectly on any device - desktop, tablet, or smartphone. Create passport photos on the go.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3>Affordable & Free</h3>
+                <p>No hidden costs or subscriptions. Create professional passport photos without breaking the bank.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials">
+    <div class="container">
+        <h2 class="section-title">What Our Users Say</h2>
+        <div class="testimonials-grid">
+            <div class="testimonial">
+                <div class="testimonial-content">
+                    <p>"PixPort saved me so much time! The AI background removal is incredibly accurate, and the final photo looks professional."</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Sarah Johnson</h4>
+                        <span>Travel Blogger</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial">
+                <div class="testimonial-content">
+                    <p>"Perfect passport photos every time. The country-specific sizing feature is amazing - no more guessing!"</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Michael Chen</h4>
+                        <span>Business Executive</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="testimonial">
+                <div class="testimonial-content">
+                    <p>"I've tried many photo tools, but PixPort's quality is unmatched. The enhancement features make my photos look studio-quality."</p>
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="author-info">
+                        <h4>Emma Rodriguez</h4>
+                        <span>Student</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Create Your Perfect Passport Photo?</h2>
+            <p>Join thousands of satisfied users who trust PixPort for their passport photo needs.</p>
+            <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('upload-area').scrollIntoView()">
+                <i class="fas fa-camera"></i> Start Now - It's Free
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const browseBtn = document.getElementById('browse-btn');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+
+    // Browse button click
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop events
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+
+    function handleFileUpload(file) {
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select a valid image file', 'error');
+            return;
+        }
+
+        if (file.size > 16 * 1024 * 1024) {
+            showToast('File size too large. Maximum 16MB allowed.', 'error');
+            return;
+        }
+
+        // Show progress
+        document.querySelector('.upload-content').classList.add('hidden');
+        uploadProgress.classList.remove('hidden');
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload file
+        fetch('/process/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect;
+            } else {
+                throw new Error(data.message || 'Upload failed');
+            }
+        })
+        .catch(error => {
+            showToast(error.message, 'error');
+            // Reset upload area
+            document.querySelector('.upload-content').classList.remove('hidden');
+            uploadProgress.classList.add('hidden');
+        });
+    }
+});
+
+function useDemoImage(img) {
+    showToast('Demo functionality coming soon!', 'info');
+}
+</script>
+{% endblock %}

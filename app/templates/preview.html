@@ -1,0 +1,464 @@
+{% extends "layout.html" %}
+
+{% block title %}Preview - {{ filename }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/preview.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="preview-page">
+    <!-- Page Header -->
+    <div class="preview-header">
+        <div class="container">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-image"></i>
+                    Preview Your Photo
+                </h1>
+                <p>Review and choose processing options for your passport photo</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Upload New Photo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="preview-content">
+            <!-- Centered Image Preview Section -->
+            <div class="image-section-centered">
+                <div class="image-preview-main">
+                    <div class="image-container">
+                        <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
+                             alt="Preview" 
+                             class="preview-image"
+                             id="previewImage">
+                        
+                        <!-- Image Controls -->
+                        <div class="image-controls">
+                            <div class="zoom-controls">
+                                <button class="control-btn" data-action="zoom-in" title="Zoom In">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="control-btn" data-action="zoom-out" title="Zoom Out">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button class="control-btn" data-action="reset" title="Reset View">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="alignment-controls">
+                                <button class="control-btn" onclick="autoAlignFace(document.getElementById('previewImage'))" title="Auto Align Face">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                                <button class="control-btn" onclick="startFaceAlignment(document.getElementById('previewImage'))" title="Manual Align">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Information -->
+                    <div class="image-info">
+                        <h3>Image Information</h3>
+                        <ul class="info-list">
+                            <li class="info-item">
+                                <span class="info-label">Loading...</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Layout Below Image -->
+            <div class="controls-cards-grid">
+                <!-- Background Card -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <i class="fas fa-cut"></i>
+                        <h3>Background</h3>
+                    </div>
+                    <div class="card-body">
+                        <button class="card-action-btn remove-bg-btn" data-action="remove_background">
+                            <i class="fas fa-cut"></i>
+                            Remove Background
+                        </button>
+                        
+                        <div class="card-subsection">
+                            <h4>Choose Background Color:</h4>
+                            <div class="color-palette-grid">
+                                <div class="color-circle" data-color="white" style="background: #ffffff; border: 2px solid #ddd;" title="White"></div>
+                                <div class="color-circle" data-color="black" style="background: #000000;" title="Black"></div>
+                                <div class="color-circle" data-color="light_blue" style="background: #4169e1;" title="Blue"></div>
+                                <div class="color-circle" data-color="red" style="background: #dc3545;" title="Red"></div>
+                                <div class="color-circle" data-color="green" style="background: #28a745;" title="Green"></div>
+                            </div>
+                            
+                            <div class="custom-color-section">
+                                <label>Or Choose Custom Color:</label>
+                                <div class="custom-color-input">
+                                    <input type="text" class="hex-input" placeholder="#ffffff" maxlength="7">
+                                    <input type="color" class="color-picker" value="#ffffff">
+                                </div>
+                                <p class="help-text">Enter hex color code (e.g. #ff5733) or use the color picker above.</p>
+                            </div>
+                            
+                            <button class="card-action-btn change-bg-btn" data-action="change_background">
+                                <i class="fas fa-palette"></i>
+                                Change Background Color
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Size & Format Card -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <i class="fas fa-expand"></i>
+                        <h3>Size & Format</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Photo Size:</label>
+                            <select class="form-select" id="photoSize">
+                                <option value="INDIA">India 35x35mm (413x531px)</option>
+                                <option value="US">US (2x2 inch)</option>
+                                <option value="UK">UK (35x45mm)</option>
+                                <option value="CANADA">Canada (35x45mm)</option>
+                                <option value="GERMANY">Germany (35x45mm)</option>
+                                <option value="FRANCE">France (35x45mm)</option>
+                                <option value="AUSTRALIA">Australia (35x45mm)</option>
+                                <option value="JAPAN">Japan (35x45mm)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>DPI Setting:</label>
+                            <select class="form-select" id="dpiSetting">
+                                <option value="300">300 DPI (Print Quality - Standard)</option>
+                                <option value="150">150 DPI (Online forms)</option>
+                                <option value="600">600 DPI (High Quality)</option>
+                            </select>
+                            <p class="help-text">Higher DPI = better quality but larger file size</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resize & Rotate Card -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <i class="fas fa-arrows-alt"></i>
+                        <h3>Resize & Rotate</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Custom Resize (Optional):</label>
+                            <div class="resize-inputs">
+                                <input type="number" class="size-input" id="customWidth" placeholder="Width (px)" min="100" max="2000">
+                                <span>×</span>
+                                <input type="number" class="size-input" id="customHeight" placeholder="Height (px)" min="100" max="2000">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Rotate Image (Optional):</label>
+                            <div class="rotate-input">
+                                <input type="number" class="degree-input" id="rotateInput" placeholder="Degrees (0-360)" min="0" max="360" value="0">
+                                <span>°</span>
+                                <button type="button" class="add-btn">+</button>
+                            </div>
+                        </div>
+                        
+                        <button class="card-action-btn apply-resize-btn" data-action="resize">
+                            <i class="fas fa-arrows-alt"></i>
+                            Apply Resize & Rotate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Face Alignment & Positioning Card -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <i class="fas fa-crosshairs"></i>
+                        <h3>Face Alignment & Positioning</h3>
+                    </div>
+                    <div class="card-body">
+                        <button class="card-action-btn auto-align-btn" onclick="autoAlignFace(document.getElementById('previewImage'))">
+                            <i class="fas fa-crosshairs"></i>
+                            Auto Align Face
+                        </button>
+                        
+                        <div class="form-group">
+                            <label>Adjust Head Size:</label>
+                            <div class="head-size-control">
+                                <button class="size-btn" data-fit="head-smaller">-</button>
+                                <span class="size-label">Head Size</span>
+                                <button class="size-btn" data-fit="head-larger">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tilt Correction (degrees):</label>
+                            <div class="tilt-control">
+                                <input type="number" class="tilt-input" value="0" min="-45" max="45">
+                                <button class="tilt-apply-btn" type="button">
+                                    <i class="fas fa-check"></i>
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showFaceGrid" class="face-grid-checkbox">
+                            <label for="showFaceGrid">Show Face Grid Overlay</label>
+                        </div>
+                        
+                        <button class="card-action-btn detect-positioning-btn">
+                            <i class="fas fa-search"></i>
+                            Check Passport Guidelines
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enhancement Card (Full Width) -->
+                <div class="control-card enhancement-card">
+                    <div class="card-header">
+                        <i class="fas fa-sliders-h"></i>
+                        <h3>ENHANCEMENT</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="sliders-grid">
+                            <div class="slider-item">
+                                <label class="slider-label">Contrast</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="contrastSlider" min="-50" max="50" value="0" data-property="contrast">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Brightness</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="brightnessSlider" min="-50" max="50" value="0" data-property="brightness">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Sharpness</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="sharpnessSlider" min="0" max="100" value="0" data-property="sharpness">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Saturation</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="saturationSlider" min="-50" max="50" value="0" data-property="saturation">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Hue</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="hueSlider" min="-180" max="180" value="0" data-property="hue">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Noise<br>Reduction</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="noiseSlider" min="0" max="100" value="0" data-property="noise">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Blur</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="blurSlider" min="0" max="10" value="0" data-property="blur">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Highlight</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="highlightSlider" min="-100" max="100" value="0" data-property="highlight">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Shadow</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="shadowSlider" min="-100" max="100" value="0" data-property="shadow">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Temperature</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="temperatureSlider" min="-100" max="100" value="0" data-property="temperature">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="slider-item">
+                                <label class="slider-label">Tint</label>
+                                <div class="slider-container">
+                                    <input type="range" class="enhancement-slider" id="tintSlider" min="-100" max="100" value="0" data-property="tint">
+                                    <span class="slider-value">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="card-action-btn enhance-btn" data-action="enhance">
+                            <i class="fas fa-magic"></i>
+                            ENHANCE IMAGE
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Action Buttons -->
+            <div class="bottom-actions">
+                <div class="action-buttons-grid">
+                    <button class="action-btn secondary upload-new-btn">
+                        <i class="fas fa-upload"></i>
+                        Upload New Photo
+                    </button>
+                    
+                    <button class="action-btn secondary reset-all-btn">
+                        <i class="fas fa-undo"></i>
+                        Reset All
+                    </button>
+                    
+                    <button class="action-btn primary download-professional-btn">
+                        <i class="fas fa-download"></i>
+                        Go Download Professional
+                    </button>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-btn passport" data-action="quick_passport">
+                        <i class="fas fa-bolt"></i>
+                        Quick Passport Photo
+                    </button>
+                    
+                    <button class="quick-btn professional" data-action="professional">
+                        <i class="fas fa-star"></i>
+                        Professional Package
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p class="loading-text">Processing your photo...</p>
+        <p class="loading-subtext">This may take a few moments</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/preview.js') }}"></script>
+<script src="{{ url_for('static', filename='js/face_align.js') }}"></script>
+<script>
+    // Set PixPort settings
+    PixPort.settings.selectedColor = 'white';
+    PixPort.settings.selectedCountry = 'US';
+    
+    // Track processing actions
+    async function processImage(action, filename, options = {}) {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        try {
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+            
+            const response = await fetch(`/process/${action}/${filename}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(options)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || `HTTP ${response.status}`);
+            }
+            
+            return result;
+            
+        } catch (error) {
+            console.error('Processing error:', error);
+            throw error;
+        } finally {
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+        }
+    }
+    
+    // Update loading text based on action
+    document.addEventListener('DOMContentLoaded', function() {
+        const processButtons = document.querySelectorAll('.process-btn');
+        const loadingText = document.querySelector('.loading-text');
+        const loadingSubtext = document.querySelector('.loading-subtext');
+        
+        processButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.dataset.action;
+                
+                if (loadingText && loadingSubtext) {
+                    switch(action) {
+                        case 'remove_background':
+                            loadingText.textContent = 'Removing background...';
+                            loadingSubtext.textContent = 'Using AI to detect and remove background';
+                            break;
+                        case 'change_background':
+                            loadingText.textContent = 'Changing background...';
+                            loadingSubtext.textContent = 'Applying new background color';
+                            break;
+                        case 'resize':
+                            loadingText.textContent = 'Resizing photo...';
+                            loadingSubtext.textContent = 'Adjusting to passport standards';
+                            break;
+                        case 'enhance':
+                            loadingText.textContent = 'Enhancing photo...';
+                            loadingSubtext.textContent = 'Improving brightness and quality';
+                            break;
+                        case 'quick_passport':
+                            loadingText.textContent = 'Creating passport photo...';
+                            loadingSubtext.textContent = 'Removing background and resizing';
+                            break;
+                        case 'professional':
+                            loadingText.textContent = 'Professional processing...';
+                            loadingSubtext.textContent = 'Applying all enhancements';
+                            break;
+                        default:
+                            loadingText.textContent = 'Processing your photo...';
+                            loadingSubtext.textContent = 'This may take a few moments';
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

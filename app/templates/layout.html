@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}PixPort - AI-powered passport photo maker. Create professional passport photos with background removal, enhancement, and resizing.{% endblock %}">
+    <title>{% block title %}PixPort - AI Passport Photo Maker{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="{{ url_for('main.index') }}">
+                    <i class="fas fa-camera-retro"></i>
+                    <span>PixPort</span>
+                </a>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('main.index') }}" class="nav-link">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('main.features') }}" class="nav-link">
+                            <i class="fas fa-star"></i> Features
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('main.about') }}" class="nav-link">
+                            <i class="fas fa-info-circle"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('main.contact') }}" class="nav-link">
+                            <i class="fas fa-envelope"></i> Contact
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="nav-hamburger" id="nav-hamburger">
+                <span class="nav-hamburger-line"></span>
+                <span class="nav-hamburger-line"></span>
+                <span class="nav-hamburger-line"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>PixPort</h3>
+                    <p>AI-powered passport photo maker. Create professional-quality passport photos with ease and accuracy.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.features') }}">AI Background Removal</a></li>
+                        <li><a href="{{ url_for('main.features') }}">Background Changing</a></li>
+                        <li><a href="{{ url_for('main.features') }}">Photo Enhancement</a></li>
+                        <li><a href="{{ url_for('main.features') }}">Passport Sizing</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.about') }}">About Us</a></li>
+                        <li><a href="{{ url_for('main.contact') }}">Contact</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>API Status</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.health') }}" target="_blank">Health Check</a></li>
+                        <li><a href="{{ url_for('main.status') }}" target="_blank">System Status</a></li>
+                        <li><a href="{{ url_for('main.ping') }}" target="_blank">Ping</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-divider"></div>
+                <div class="footer-bottom-content">
+                    <p>&copy; 2025 PixPort. All rights reserved.</p>
+                    <p>Made with <i class="fas fa-heart text-red"></i> for passport photos</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Processing your image...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

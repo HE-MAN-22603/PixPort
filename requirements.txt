@@ -1,0 +1,10 @@
+Flask>=2.3.3,<4.0.0
+Flask-Limiter>=3.5.0
+rembg>=2.0.60
+opencv-python-headless>=4.8.0.76
+Pillow>=10.0.0
+onnxruntime>=1.15.1
+numpy>=1.24.3
+python-dotenv>=1.0.0
+Werkzeug>=2.3.7
+gunicorn>=21.2.0

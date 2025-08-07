@@ -1,0 +1,572 @@
+/* Card-Based Layout CSS for PixPort */
+
+/* Main Container */
+.controls-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Individual Control Cards */
+.control-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    transition: all 0.3s ease;
+}
+
+.control-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Headers */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header i {
+    font-size: 18px;
+    color: #6b7280;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    letter-spacing: -0.025em;
+}
+
+/* Action Buttons */
+.action-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    text-transform: capitalize;
+    letter-spacing: 0.025em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Button Color Variants */
+.btn-pink {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-pink:hover {
+    background: linear-gradient(135deg, #ee82f5 0%, #f44163 100%);
+}
+
+.btn-blue {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-blue:hover {
+    background: linear-gradient(135deg, #5a6fdd 0%, #6b4295 100%);
+}
+
+.btn-teal {
+    background: linear-gradient(135deg, #4fd1c7 0%, #06b6d4 100%);
+    color: white;
+}
+
+.btn-teal:hover {
+    background: linear-gradient(135deg, #3fc5bb 0%, #0891b2 100%);
+}
+
+/* Color Palette */
+.color-palette {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 3px solid transparent;
+    position: relative;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: #6366f1;
+}
+
+.color-option.selected {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Color Options */
+.color-white { 
+    background: white; 
+    border: 3px solid #d1d5db; 
+}
+
+.color-black { 
+    background: #000000; 
+}
+
+.color-blue { 
+    background: #2563eb; 
+}
+
+.color-red { 
+    background: #dc2626; 
+}
+
+.color-green { 
+    background: #16a34a; 
+}
+
+/* Custom Color Input */
+.custom-color-section {
+    margin-top: 16px;
+}
+
+.custom-color-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.custom-color-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-picker {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    padding: 0;
+    background: none;
+}
+
+.color-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    background: white;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Form Controls */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-select, .form-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+.form-select:focus, .form-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Input Groups */
+.input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.input-group .form-input {
+    flex: 1;
+}
+
+.input-group span {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Info Text */
+.info-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .controls-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+    
+    .control-card {
+        padding: 20px;
+    }
+    
+    .color-palette {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-card {
+        padding: 16px;
+    }
+    
+    .card-header {
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+    }
+    
+    .action-btn {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+}
+
+/* Face Alignment Card Specific Styles */
+.face-alignment-card {
+    grid-column: 1 / 2;
+    grid-row: 2;
+}
+
+.adjustment-controls {
+    margin-bottom: 16px;
+}
+
+.head-size-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.head-size-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-right: 8px;
+}
+
+.size-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.size-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.size-display {
+    padding: 6px 12px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #374151;
+    min-width: 80px;
+    text-align: center;
+}
+
+.tilt-correction {
+    margin-bottom: 16px;
+}
+
+.tilt-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tilt-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.apply-btn {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #6366f1;
+}
+
+.checkbox-label {
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+}
+
+/* Enhancement Section - Full Width */
+.enhancement-section {
+    grid-column: 1 / -1;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    margin-top: 20px;
+}
+
+.enhancement-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #6366f1;
+}
+
+.enhancement-header i {
+    font-size: 20px;
+    color: #6366f1;
+}
+
+.enhancement-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sliders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.slider-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.slider-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4b5563;
+    text-transform: capitalize;
+    text-align: center;
+}
+
+.slider-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.enhancement-slider {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    outline: none;
+    border-radius: 3px;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.enhancement-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.enhancement-slider::-webkit-slider-thumb:hover {
+    background: #5855eb;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.enhancement-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.enhance-button {
+    align-self: center;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.enhance-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Specific adjustments for small sliders */
+.noise-reduction-slider,
+.blur-slider {
+    height: 4px;
+}
+
+.noise-reduction-slider::-webkit-slider-thumb,
+.blur-slider::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+}
+
+/* Animation for smooth card entrance */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.control-card, .enhancement-section {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.control-card:nth-child(1) { animation-delay: 0.1s; }
+.control-card:nth-child(2) { animation-delay: 0.2s; }
+.control-card:nth-child(3) { animation-delay: 0.3s; }
+.enhancement-section { animation-delay: 0.4s; }
