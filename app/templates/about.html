@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+
+{% block title %}About PixPort - AI Passport Photo Maker{% endblock %}
+
+{% block meta_description %}Learn about the mission and technology behind PixPort, the AI-powered passport photo maker.{% endblock %}
+
+{% block extra_css %}
+<style>
+.about-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.about-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+p {
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.tech-stack {
+    margin-top: 2rem;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.tech-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.tech-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #667eea;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.team-section {
+    padding: 4rem 0;
+    background: #f8f9fa;
+    margin-top: 3rem;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.team-member {
+    text-align: center;
+}
+
+.team-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.team-name {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.team-title {
+    color: #777;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="about-hero">
+    <div class="container">
+        <h1>About PixPort</h1>
+        <p class="lead">Making professional passport photos accessible to everyone, everywhere.</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="about-content">
+        <h2>Our Mission</h2>
+        <p>
+            At PixPort, our mission is to simplify the process of creating compliant passport photos. We believe that getting a passport photo should be a quick, easy, and affordable process, not a chore. By leveraging the latest in artificial intelligence and computer vision, we provide a tool that is both powerful and user-friendly.
+        </p>
+        
+        <h2>The Technology Behind PixPort</h2>
+        <p>
+            PixPort is built on a modern, robust technology stack to ensure a seamless and secure experience. Our backend is powered by Python and Flask, providing a solid foundation for our AI services. We use state-of-the-art machine learning models for background removal and photo enhancement, ensuring high-quality results.
+        </p>
+        
+        <div class="tech-stack">
+            <h3>Core Technologies</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <div class="tech-icon">🐍</div>
+                    <h4>Python & Flask</h4>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🤖</div>
+                    <h4>Rembg AI</h4>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🎨</div>
+                    <h4>Pillow</h4>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🚀</div>
+                    <h4>Gunicorn</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="team-section">
+    <div class="container">
+        <h2 class="text-center">Meet the Team</h2>
+        <p class="text-center">We are a passionate team of developers and designers dedicated to building great products.</p>
+        
+        <div class="team-grid">
+            <div class="team-member">
+                <img src="https://via.placeholder.com/150" alt="Team Member" class="team-photo">
+                <h3 class="team-name">Alex Doe</h3>
+                <p class="team-title">Lead Developer</p>
+            </div>
+            <div class="team-member">
+                <img src="https://via.placeholder.com/150" alt="Team Member" class="team-photo">
+                <h3 class="team-name">Jane Smith</h3>
+                <p class="team-title">UI/UX Designer</p>
+            </div>
+            <div class="team-member">
+                <img src="https://via.placeholder.com/150" alt="Team Member" class="team-photo">
+                <h3 class="team-name">Sam Wilson</h3>
+                <p class="team-title">AI Specialist</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

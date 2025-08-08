@@ -1,766 +1,2512 @@
-/* PixPort Preview Page JavaScript */
+/* =============================================
+   PIXPORT PREVIEW PAGE - FRESH JAVASCRIPT
+   ============================================= */
 
-// Preview page state
-let previewState = {
-    filename: null,
+/* PixPort Preview - Error Handler and Fallback Functions */
+
+// Ensure showToast function is available
+if (typeof showToast === 'undefined') {
+    window.showToast = function(message, type = 'info', duration = 3000) {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        
+        // Remove existing notifications to prevent stacking
+        const existingNotifications = document.querySelectorAll('.toast-notification');
+        existingNotifications.forEach(notification => {
+            notification.remove();
+        });
+        
+        // Simple notification fallback
+        const notification = document.createElement('div');
+        notification.className = 'toast-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10001;
+            font-size: 14px;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInFromRight 0.3s ease-out;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Add animation styles if not present
+        if (!document.querySelector('#toast-animations')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animations';
+            style.textContent = `
+                @keyframes slideInFromRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutToRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOutToRight 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, duration);
+    };
+}
+
+// Ensure face alignment functions are available
+if (typeof autoAlignFace === 'undefined') {
+    window.autoAlignFace = function(imageElement) {
+        console.log('Auto align face called on:', imageElement);
+        showToast('Face alignment feature is loading...', 'info');
+    };
+}
+
+if (typeof startFaceAlignment === 'undefined') {
+    window.startFaceAlignment = function(imageElement) {
+        console.log('Start face alignment called on:', imageElement);
+        showToast('Manual face alignment feature is loading...', 'info');
+    };
+}
+
+// Global state management
+const previewState = {
     currentImage: null,
-    processedFilename: null,  // Track latest processed image
-    zoomLevel: 1,
-    isDragging: false,
-    dragStart: { x: 0, y: 0 },
-    imageOffset: { x: 0, y: 0 }
+    originalImage: null,
+    zoom: 1,
+    rotation: 0,
+    selectedColors: [],
+    customColor: '#ffffff',
+    isProcessing: false,
+    sliderValues: {
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        sharpness: 0,
+        vibrance: 0,
+        warmth: 0,
+        shadows: 0,
+        highlights: 0
+    }
 };
 
-// Initialize preview page
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize enhanced preview functionality
-    initializeEnhancedPreview();
-    if (document.querySelector('.preview-page')) {
+// Configuration
+const CONFIG = {
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    allowedFormats: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+};
+
+/* ============================================
+   UTILITY FUNCTIONS
+   ============================================ */
+
+// Get current filename from URL
+function getCurrentFilename() {
+    const pathArray = window.location.pathname.split('/');
+    return pathArray[pathArray.length - 1];
+}
+
+// Extract original filename by removing all processing suffixes
+function getOriginalFilename(processedFilename) {
+    if (!processedFilename) return 'Unknown';
+    
+    let originalName = processedFilename;
+    
+    // Remove common processing suffixes
+    const suffixes = [
+        /_bg_hex_[a-fA-F0-9]+/g,    // hex colors like _bg_hex_ffffff
+        /_bg_(white|light_blue|light_gray|red|cream)/g,  // preset colors
+        /_enhanced/g,
+        /_passport_[a-z]+/g,
+        /_passport_photo/g,
+        /_resized/g,
+        /_no_bg/g,
+        /_temp_[a-zA-Z0-9_]+/g
+    ];
+    
+    suffixes.forEach(suffix => {
+        originalName = originalName.replace(suffix, '');
+    });
+    
+    // Extract only the user-friendly part (remove UUID prefix)
+    // Format: uuid_originalname.ext -> originalname.ext
+    const parts = originalName.split('_');
+    if (parts.length >= 2) {
+        // Remove UUID part (first part) and join the rest
+        const nameWithoutUuid = parts.slice(1).join('_');
+        if (nameWithoutUuid) {
+            originalName = nameWithoutUuid;
+        }
+    }
+    
+    return originalName;
+}
+
+// Generate user-friendly current filename for display
+function generateFriendlyCurrentName(processedFilename) {
+    if (!processedFilename) return 'Unknown';
+    
+    // Get the original name first
+    const originalName = getOriginalFilename(processedFilename);
+    const baseNameWithoutExt = originalName.replace(/\.[^/.]+$/, ''); // Remove extension
+    const extension = originalName.match(/\.[^/.]+$/) ? originalName.match(/\.[^/.]+$/)[0] : '.jpg';
+    
+    // Determine processing type and version
+    let processType = '';
+    let version = 1;
+    
+    // Check what type of processing was applied
+    if (processedFilename.includes('_bg_')) {
+        if (processedFilename.includes('_bg_white')) {
+            processType = 'white_bg';
+        } else if (processedFilename.includes('_bg_light_blue')) {
+            processType = 'blue_bg';
+        } else if (processedFilename.includes('_bg_light_gray')) {
+            processType = 'gray_bg';
+        } else if (processedFilename.includes('_bg_red')) {
+            processType = 'red_bg';
+        } else if (processedFilename.includes('_bg_cream')) {
+            processType = 'cream_bg';
+        } else if (processedFilename.includes('_bg_hex_')) {
+            processType = 'custom_bg';
+        }
+    } else if (processedFilename.includes('_no_bg')) {
+        processType = 'no_bg';
+    } else if (processedFilename.includes('_enhanced')) {
+        processType = 'enhanced';
+    } else if (processedFilename.includes('_passport')) {
+        processType = 'passport';
+    } else if (processedFilename.includes('_resized')) {
+        processType = 'resized';
+    } else {
+        // For original uploaded files (no processing detected)
+        // Check if filename contains UUID pattern (indicates it's an uploaded file)
+        if (isUuidBasedFilename(processedFilename)) {
+            processType = 'pixport';
+        } else {
+            // If no UUID detected, just return the original name as-is
+            return originalName;
+        }
+    }
+    
+    // Generate a simple incremental version number for cleaner names
+    // Use a hash of the filename for consistent versioning
+    version = Math.abs(hashCode(processedFilename)) % 99 + 1;
+    
+    // Create friendly name: originalname_processtype_version.ext
+    return `${baseNameWithoutExt}_${processType}_${version}${extension}`;
+}
+
+// Check if filename follows UUID pattern (indicates uploaded file)
+function isUuidBasedFilename(filename) {
+    // UUID pattern: 8-4-4-4-12 characters separated by hyphens
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i;
+    return uuidPattern.test(filename);
+}
+
+// Simple hash function for consistent version numbers
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+}
+
+// Get clean display name (remove file extension for display)
+function getDisplayName(filename) {
+    if (!filename) return 'Unknown';
+    const lastDotIndex = filename.lastIndexOf('.');
+    return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+}
+
+/* ============================================
+   INITIALIZATION
+   ============================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        console.log('PixPort Preview: Initializing...');
         initializePreviewPage();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showErrorMessage('Failed to initialize preview page');
     }
 });
 
 function initializePreviewPage() {
-    console.log('🔍 Initializing preview page...');
+    // Initialize all components
+    initializeImageHandling();
+    initializeColorSelection();
+    initializeSliders();
+    initializeControls();
+    initializeFormHandling();
     
-    // Get filename from URL or data attribute
-    previewState.filename = getFilenameFromURL();
+    // Load existing image if available
+    loadExistingImage();
     
-    setupImageControls();
-    setupProcessingOptions();
-    setupProcessingButtons();
-    loadImageInfo();
+    console.log('PixPort Preview: Initialization complete');
 }
 
-function getFilenameFromURL() {
-    const path = window.location.pathname;
-    const matches = path.match(/\/preview\/(.+)$/);
-    return matches ? matches[1] : null;
+/* ============================================
+   IMAGE HANDLING
+   ============================================ */
+
+function initializeImageHandling() {
+    const imageContainer = document.querySelector('.image-container');
+    const previewImage = document.querySelector('.preview-image');
+    
+    if (!imageContainer || !previewImage) return;
+    
+    // Add drag and drop functionality
+    setupImageDragAndDrop(imageContainer);
+    
+    // Add zoom and pan functionality
+    setupImageZoomAndPan(previewImage);
+    
+    // Add image controls event listeners
+    setupImageControls();
+}
+
+function setupImageDragAndDrop(container) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        container.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        container.addEventListener(eventName, () => {
+            container.classList.add('drag-over');
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        container.addEventListener(eventName, () => {
+            container.classList.remove('drag-over');
+        });
+    });
+    
+    container.addEventListener('drop', handleImageDrop);
+}
+
+function handleImageDrop(e) {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleImageFile(files[0]);
+    }
+}
+
+function setupImageZoomAndPan(image) {
+    let isDragging = false;
+    let startX, startY, currentX = 0, currentY = 0;
+    
+    image.addEventListener('mousedown', (e) => {
+        if (previewState.zoom > 1) {
+            isDragging = true;
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+            image.style.cursor = 'grabbing';
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        currentX = e.clientX - startX;
+        currentY = e.clientY - startY;
+        
+        image.style.transform = `translate(${currentX}px, ${currentY}px) scale(${previewState.zoom}) rotate(${previewState.rotation}deg)`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        image.style.cursor = previewState.zoom > 1 ? 'grabbing' : 'default';
+    });
+    
+    // Zoom with mouse wheel
+    image.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        updateZoom(previewState.zoom + delta);
+    });
 }
 
 function setupImageControls() {
-    const image = document.querySelector('.preview-image');
-    const container = document.querySelector('.image-container');
-    
-    if (!image || !container) return;
-    
-    previewState.currentImage = image;
-    
     // Zoom controls
     const zoomInBtn = document.querySelector('[data-action="zoom-in"]');
     const zoomOutBtn = document.querySelector('[data-action="zoom-out"]');
-    const resetBtn = document.querySelector('[data-action="reset"]');
+    const zoomResetBtn = document.querySelector('[data-action="zoom-reset"]');
+    const zoomFitBtn = document.querySelector('[data-action="zoom-fit"]');
     
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomImage(1.2));
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomImage(0.8));
-    if (resetBtn) resetBtn.addEventListener('click', resetImage);
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => updateZoom(previewState.zoom + 0.25));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => updateZoom(previewState.zoom - 0.25));
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => updateZoom(1));
+    if (zoomFitBtn) zoomFitBtn.addEventListener('click', fitImageToContainer);
     
-    // Mouse events for dragging
-    image.addEventListener('mousedown', startDrag);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
+    // Handle zoom-reset action for the Reset View button
+    const resetViewBtn = document.querySelector('[data-action="zoom-reset"]');
+    if (resetViewBtn) resetViewBtn.addEventListener('click', () => {
+        updateZoom(1);
+        resetImagePosition();
+    });
     
-    // Touch events for mobile
-    image.addEventListener('touchstart', startDrag);
-    document.addEventListener('touchmove', drag);
-    document.addEventListener('touchend', endDrag);
-    
-    // Prevent context menu on image
-    image.addEventListener('contextmenu', e => e.preventDefault());
+    // Alignment controls
+    const alignButtons = document.querySelectorAll('[data-align]');
+    alignButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const alignment = btn.getAttribute('data-align');
+            alignImage(alignment);
+        });
+    });
 }
 
-function zoomImage(factor) {
-    previewState.zoomLevel *= factor;
-    previewState.zoomLevel = Math.max(0.5, Math.min(3, previewState.zoomLevel));
+function updateZoom(newZoom) {
+    const minZoom = 0.25;
+    const maxZoom = 3;
     
-    updateImageTransform();
+    previewState.zoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+    
+    const image = document.querySelector('.preview-image');
+    if (image) {
+        image.style.transform = `scale(${previewState.zoom}) rotate(${previewState.rotation}deg)`;
+        image.style.cursor = previewState.zoom > 1 ? 'grab' : 'default';
+    }
+    
+    // Update zoom display
+    const zoomDisplay = document.querySelector('.zoom-level');
+    if (zoomDisplay) {
+        zoomDisplay.textContent = `${Math.round(previewState.zoom * 100)}%`;
+    }
+    
+    // Update control buttons
     updateZoomControls();
-}
-
-function resetImage() {
-    previewState.zoomLevel = 1;
-    previewState.imageOffset = { x: 0, y: 0 };
-    updateImageTransform();
-    updateZoomControls();
-}
-
-function updateImageTransform() {
-    if (!previewState.currentImage) return;
-    
-    const { zoomLevel, imageOffset } = previewState;
-    previewState.currentImage.style.transform = 
-        `scale(${zoomLevel}) translate(${imageOffset.x}px, ${imageOffset.y}px)`;
 }
 
 function updateZoomControls() {
     const zoomInBtn = document.querySelector('[data-action="zoom-in"]');
     const zoomOutBtn = document.querySelector('[data-action="zoom-out"]');
     
-    if (zoomInBtn) zoomInBtn.disabled = previewState.zoomLevel >= 3;
-    if (zoomOutBtn) zoomOutBtn.disabled = previewState.zoomLevel <= 0.5;
+    if (zoomInBtn) {
+        zoomInBtn.disabled = previewState.zoom >= 3;
+    }
+    
+    if (zoomOutBtn) {
+        zoomOutBtn.disabled = previewState.zoom <= 0.25;
+    }
 }
 
-function startDrag(e) {
-    if (previewState.zoomLevel <= 1) return;
+function fitImageToContainer() {
+    const container = document.querySelector('.image-container');
+    const image = document.querySelector('.preview-image');
     
-    previewState.isDragging = true;
+    if (!container || !image) return;
     
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const containerRect = container.getBoundingClientRect();
+    const imageRect = image.getBoundingClientRect();
     
-    previewState.dragStart = {
-        x: clientX - previewState.imageOffset.x,
-        y: clientY - previewState.imageOffset.y
+    const scaleX = containerRect.width / imageRect.width;
+    const scaleY = containerRect.height / imageRect.height;
+    const scale = Math.min(scaleX, scaleY) * 0.9; // 90% of container
+    
+    updateZoom(scale);
+}
+
+function alignImage(alignment) {
+    const container = document.querySelector('.image-container');
+    if (!container) return;
+    
+    const alignmentClasses = {
+        'left': 'justify-start',
+        'center': 'justify-center',
+        'right': 'justify-end',
+        'top': 'items-start',
+        'middle': 'items-center',
+        'bottom': 'items-end'
     };
     
-    previewState.currentImage.style.cursor = 'grabbing';
-    e.preventDefault();
+    // Remove all alignment classes
+    Object.values(alignmentClasses).forEach(cls => {
+        container.classList.remove(cls);
+    });
+    
+    // Add new alignment class
+    if (alignmentClasses[alignment]) {
+        container.classList.add(alignmentClasses[alignment]);
+    }
 }
 
-function drag(e) {
-    if (!previewState.isDragging) return;
+// Reset image position and zoom
+function resetImagePosition() {
+    const image = document.querySelector('.preview-image');
+    if (image) {
+        // Reset transform to default
+        image.style.transform = 'scale(1) rotate(0deg)';
+        image.style.cursor = 'default';
+    }
     
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    // Reset state values
+    previewState.zoom = 1;
+    previewState.rotation = 0;
     
-    previewState.imageOffset = {
-        x: clientX - previewState.dragStart.x,
-        y: clientY - previewState.dragStart.y
-    };
+    // Update zoom display if it exists
+    const zoomDisplay = document.querySelector('.zoom-level');
+    if (zoomDisplay) {
+        zoomDisplay.textContent = '100%';
+    }
     
-    updateImageTransform();
-    e.preventDefault();
+    // Update control buttons
+    updateZoomControls();
+    
+    showSuccessMessage('View reset to default');
 }
 
-function endDrag() {
-    if (!previewState.isDragging) return;
-    
-    previewState.isDragging = false;
-    previewState.currentImage.style.cursor = 'grab';
+function loadExistingImage() {
+    const previewImage = document.querySelector('.preview-image');
+    if (previewImage && previewImage.src && previewImage.src !== window.location.href) {
+        previewState.currentImage = previewImage.src;
+        previewState.originalImage = previewImage.src;
+        updateImageInfo();
+    }
 }
 
-function setupProcessingOptions() {
-    const optionHeaders = document.querySelectorAll('.option-header');
+/* ============================================
+   COLOR SELECTION
+   ============================================ */
+
+function initializeColorSelection() {
+    // Preset color circles
+    const colorCircles = document.querySelectorAll('.color-circle');
+    colorCircles.forEach(circle => {
+        circle.addEventListener('click', handleColorSelection);
+    });
     
-    optionHeaders.forEach(header => {
-        header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const isActive = this.classList.contains('active');
-            
-            // Close all options first
-            optionHeaders.forEach(h => {
-                h.classList.remove('active');
-                if (h.nextElementSibling) {
-                    h.nextElementSibling.classList.remove('active');
-                }
-            });
-            
-            // Open clicked option if it wasn't active
-            if (!isActive) {
-                this.classList.add('active');
-                content.classList.add('active');
+    // Custom color inputs
+    const hexInput = document.querySelector('.hex-input');
+    const colorPicker = document.querySelector('.color-picker');
+    
+    if (hexInput) {
+        hexInput.addEventListener('input', handleCustomColorInput);
+        hexInput.addEventListener('blur', (e) => {
+            // Only validate if the input actually had content and user was interacting with it
+            if (e.target === document.activeElement || e.relatedTarget) {
+                validateHexColor(e);
             }
         });
-    });
+    }
     
-    // Setup color selection
-    setupColorSelection();
+    if (colorPicker) {
+        colorPicker.addEventListener('change', handleColorPickerChange);
+    }
     
-    // Setup country selection
-    setupCountrySelection();
+    // Colors are now hardcoded in the HTML template
 }
 
-function setupColorSelection() {
-    const colorOptions = document.querySelectorAll('.color-option');
+
+function handleColorSelection(e) {
+    const color = e.target.getAttribute('data-color');
+    if (!color) return;
     
-    colorOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove selected class from all options
-            colorOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Add selected class to clicked option
-            this.classList.add('selected');
-            
-            // Store selected color
-            const color = this.dataset.color || this.className.match(/color-(\w+)/)?.[1];
-            PixPort.settings.selectedColor = color;
-        });
+    // Remove selection from all color circles
+    document.querySelectorAll('.color-circle').forEach(circle => {
+        circle.classList.remove('selected');
     });
     
-    // Set default selection
-    const defaultColor = document.querySelector('.color-white');
-    if (defaultColor) defaultColor.classList.add('selected');
+    // Add selection to clicked circle
+    e.target.classList.add('selected');
+    
+    // Update state
+    previewState.selectedColors = [color];
+    previewState.customColor = color;
+    
+    // Update custom color input
+    const hexInput = document.querySelector('.hex-input');
+    if (hexInput) {
+        hexInput.value = color;
+    }
+    
+    const colorPicker = document.querySelector('.color-picker');
+    if (colorPicker) {
+        colorPicker.value = color;
+    }
 }
 
-function setupCountrySelection() {
-    const countryOptions = document.querySelectorAll('.country-option');
+function handleCustomColorInput(e) {
+    let value = e.target.value.trim();
     
-    countryOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove selected class from all options
-            countryOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Add selected class to clicked option
-            this.classList.add('selected');
-            
-            // Store selected country
-            PixPort.settings.selectedCountry = this.dataset.country || this.textContent.trim();
-        });
-    });
+    // Add # if missing
+    if (value && !value.startsWith('#')) {
+        value = '#' + value;
+        e.target.value = value;
+    }
     
-    // Set default selection
-    const defaultCountry = document.querySelector('[data-country="US"]');
-    if (defaultCountry) defaultCountry.classList.add('selected');
-}
-
-function setupProcessingButtons() {
-    const processButtons = document.querySelectorAll('.process-btn');
-    
-    processButtons.forEach(button => {
-        button.addEventListener('click', async function() {
-            const action = this.dataset.action;
-            if (!action || !previewState.filename) return;
-            
-            try {
-                this.disabled = true;
-                
-                let options = {};
-                
-                // Add action-specific options
-                if (action === 'change_background') {
-                    options.color = PixPort.settings.selectedColor;
-                } else if (action === 'resize') {
-                    options.country = PixPort.settings.selectedCountry;
-                }
-                
-                const result = await processImage(action, previewState.filename, options);
-                
-                if (result.success) {
-                    showToast(result.message, 'success');
-                    
-                    // Update preview image with processed result
-                    if (result.preview_url) {
-                        updatePreviewImage(result.preview_url, result.output_filename);
-                    } else if (result.redirect) {
-                        // Only redirect for quick actions
-                        window.location.href = result.redirect;
-                    }
-                } else {
-                    showToast(result.message || 'Processing failed', 'error');
-                }
-                
-            } catch (error) {
-                showToast(error.message, 'error');
-            } finally {
-                this.disabled = false;
-            }
-        });
-    });
-}
-
-async function loadImageInfo() {
-    if (!previewState.filename) return;
-    
-    try {
-        const response = await fetch(`/api/image-info/${previewState.filename}`);
-        if (response.ok) {
-            const info = await response.json();
-            updateImageInfo(info);
+    if (isValidHexColor(value)) {
+        previewState.customColor = value;
+        
+        const colorPicker = document.querySelector('.color-picker');
+        if (colorPicker) {
+            colorPicker.value = value;
         }
-    } catch (error) {
-        console.error('Failed to load image info:', error);
-    }
-}
-
-function updateImageInfo(info) {
-    const infoContainer = document.querySelector('.image-info');
-    if (!infoContainer) return;
-    
-    const infoList = infoContainer.querySelector('.info-list');
-    if (!infoList) return;
-    
-    infoList.innerHTML = `
-        <li class="info-item">
-            <span class="info-label">Format:</span>
-            <span class="info-value">${info.format || 'Unknown'}</span>
-        </li>
-        <li class="info-item">
-            <span class="info-label">Dimensions:</span>
-            <span class="info-value">${info.width || 0} × ${info.height || 0}px</span>
-        </li>
-        <li class="info-item">
-            <span class="info-label">File Size:</span>
-            <span class="info-value">${formatFileSize(info.file_size || 0)}</span>
-        </li>
-        <li class="info-item">
-            <span class="info-label">Color Mode:</span>
-            <span class="info-value">${info.mode || 'RGB'}</span>
-        </li>
-    `;
-}
-
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    if (!document.querySelector('.preview-page')) return;
-    
-    switch(e.key) {
-        case '+':
-        case '=':
-            e.preventDefault();
-            zoomImage(1.2);
-            break;
-        case '-':
-            e.preventDefault();
-            zoomImage(0.8);
-            break;
-        case '0':
-            e.preventDefault();
-            resetImage();
-            break;
-        case 'Escape':
-            resetImage();
-            break;
-    }
-});
-
-// Update preview image with processed result
-function updatePreviewImage(previewUrl, outputFilename) {
-    if (!previewState.currentImage) return;
-    
-    // Update the preview image source
-    previewState.currentImage.src = previewUrl;
-    
-    // Store the processed filename
-    previewState.processedFilename = outputFilename;
-    
-    // Reset image transform
-    resetImage();
-    
-    // Update the current working filename for further processing
-    previewState.filename = outputFilename;
-    
-    // Show/update the result button
-    showResultButton();
-    
-    // Add visual feedback
-    previewState.currentImage.style.transition = 'opacity 0.3s ease';
-    previewState.currentImage.style.opacity = '0.7';
-    
-    previewState.currentImage.onload = function() {
-        this.style.opacity = '1';
-        this.style.transition = '';
         
-        // Update image info for the new processed image
-        loadImageInfo();
-    };
-}
-
-// Show result/download button when image has been processed
-function showResultButton() {
-    let resultButton = document.querySelector('.result-button');
-    
-    if (!resultButton) {
-        // Create result button if it doesn't exist
-        resultButton = document.createElement('button');
-        resultButton.className = 'btn btn-primary result-button';
-        resultButton.innerHTML = `
-            <i class="fas fa-download"></i>
-            Go to Download Page
-        `;
-        
-        resultButton.addEventListener('click', function() {
-            if (previewState.processedFilename) {
-                window.location.href = `/result/${previewState.processedFilename}`;
-            }
+        // Clear preset selections
+        document.querySelectorAll('.color-circle').forEach(circle => {
+            circle.classList.remove('selected');
         });
-        
-        // Add button to header actions or create a container
-        const headerActions = document.querySelector('.header-actions');
-        if (headerActions) {
-            headerActions.appendChild(resultButton);
-        } else {
-            // Create a floating action button
-            resultButton.style.position = 'fixed';
-            resultButton.style.bottom = '20px';
-            resultButton.style.right = '20px';
-            resultButton.style.zIndex = '1000';
-            resultButton.style.borderRadius = '50px';
-            resultButton.style.padding = '15px 25px';
-            resultButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-            document.body.appendChild(resultButton);
-        }
+    }
+}
+
+function handleColorPickerChange(e) {
+    const color = e.target.value;
+    previewState.customColor = color;
+    
+    const hexInput = document.querySelector('.hex-input');
+    if (hexInput) {
+        hexInput.value = color;
     }
     
-    // Show with animation
-    resultButton.style.display = 'block';
-    setTimeout(() => {
-        resultButton.style.opacity = '1';
-        resultButton.style.transform = 'scale(1)';
-    }, 100);
+    // Clear preset selections
+    document.querySelectorAll('.color-circle').forEach(circle => {
+        circle.classList.remove('selected');
+    });
 }
 
-// Enhanced preview functionality
-function initializeEnhancedPreview() {
-    console.log('🎨 Initializing enhanced preview...');
-    
-    // Initialize all enhanced components
-    setupEnhancementSliders();
-    setupActionButtons();
-    setupBottomActions();
-    setupSelectDropdowns();
-    setupRotateControls();
-    setupFitControls();
-    setupColorPalette();
+function validateHexColor(e) {
+    const value = e.target.value.trim();
+    // Only validate if there's actually content and it's not valid
+    // Don't validate empty values or placeholder values
+    if (value && value !== '#ffffff' && value !== '' && !isValidHexColor(value)) {
+        showErrorMessage('Please enter a valid hex color (e.g., #FF0000)');
+        e.target.focus();
+    }
 }
 
-// Setup enhancement sliders
-function setupEnhancementSliders() {
+function isValidHexColor(hex) {
+    return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
+}
+
+/* ============================================
+   ENHANCEMENT SLIDERS
+   ============================================ */
+
+function initializeSliders() {
     const sliders = document.querySelectorAll('.enhancement-slider');
     
     sliders.forEach(slider => {
-        const valueDisplay = slider.nextElementSibling;
+        const sliderType = slider.getAttribute('data-slider');
+        if (sliderType && previewState.sliderValues.hasOwnProperty(sliderType)) {
+            slider.value = previewState.sliderValues[sliderType];
+            updateSliderValue(slider, sliderType);
+        }
         
-        // Update display value on change
-        slider.addEventListener('input', function() {
-            if (valueDisplay && valueDisplay.classList.contains('slider-value')) {
-                valueDisplay.textContent = this.value;
-            }
-            
-            // Apply real-time preview effects (CSS filters)
-            applyEnhancementPreview();
-        });
-    });
-}
-
-// Apply enhancement preview using CSS filters
-function applyEnhancementPreview() {
-    const image = document.getElementById('previewImage');
-    if (!image) return;
-    
-    const contrast = document.getElementById('contrastSlider')?.value || 0;
-    const brightness = document.getElementById('brightnessSlider')?.value || 0;
-    const saturation = document.getElementById('saturationSlider')?.value || 0;
-    const hue = document.getElementById('hueSlider')?.value || 0;
-    
-    const filters = [
-        `contrast(${100 + parseInt(contrast)}%)`,
-        `brightness(${100 + parseInt(brightness)}%)`,
-        `saturate(${100 + parseInt(saturation)}%)`,
-        `hue-rotate(${hue}deg)`
-    ];
-    
-    image.style.filter = filters.join(' ');
-}
-
-// Setup action buttons
-function setupActionButtons() {
-    const actionButtons = document.querySelectorAll('.action-btn, .quick-btn');
-    
-    actionButtons.forEach(button => {
-        button.addEventListener('click', async function() {
-            const action = this.dataset.action;
-            if (!action) return;
-            
-            try {
-                this.disabled = true;
-                this.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
-                
-                let options = getProcessingOptions(action);
-                const filename = previewState.filename || getFilenameFromURL();
-                
-                const result = await processImage(action, filename, options);
-                
-                if (result.success) {
-                    showToast(result.message, 'success');
-                    
-                    if (result.preview_url) {
-                        updatePreviewImage(result.preview_url, result.output_filename);
-                    }
-                } else {
-                    showToast(result.message || 'Processing failed', 'error');
-                }
-                
-            } catch (error) {
-                showToast(error.message, 'error');
-            } finally {
-                this.disabled = false;
-                resetButtonText(this, action);
+        slider.addEventListener('input', (e) => {
+            const type = e.target.getAttribute('data-slider');
+            if (type) {
+                previewState.sliderValues[type] = parseInt(e.target.value);
+                updateSliderValue(e.target, type);
             }
         });
     });
 }
 
-// Get processing options based on action
-function getProcessingOptions(action) {
-    let options = {};
+function updateSliderValue(slider, type) {
+    const value = parseInt(slider.value);
+    const valueDisplay = slider.parentElement.querySelector('.slider-value');
     
-    switch(action) {
-        case 'change_background':
-            const selectedColor = document.querySelector('.color-option.selected');
-            options.color = selectedColor?.dataset.color || 'white';
-            break;
-            
-        case 'resize':
-            const selectedCountry = document.getElementById('photoSize')?.value || 'US';
-            options.country = selectedCountry;
-            
-            // Add custom dimensions if specified
-            const customWidth = document.getElementById('customWidth')?.value;
-            const customHeight = document.getElementById('customHeight')?.value;
-            if (customWidth && customHeight) {
-                options.custom_width = parseInt(customWidth);
-                options.custom_height = parseInt(customHeight);
-            }
-            break;
-            
-        case 'enhance':
-            // Get all slider values for enhancement
-            const sliders = document.querySelectorAll('.enhancement-slider');
-            sliders.forEach(slider => {
-                const property = slider.dataset.property;
-                if (property) {
-                    options[property] = parseFloat(slider.value);
-                }
-            });
-            break;
-            
-        case 'quick_passport':
-        case 'professional':
-            options.country = document.getElementById('photoSize')?.value || 'US';
-            const bgColor = document.querySelector('.color-option.selected');
-            options.color = bgColor?.dataset.color || 'white';
-            break;
+    if (valueDisplay) {
+        const sign = value > 0 ? '+' : '';
+        valueDisplay.textContent = `${sign}${value}`;
     }
     
-    return options;
+    // Update slider track color based on value
+    const percentage = ((value + 100) / 200) * 100;
+    slider.style.background = `linear-gradient(to top, #3b82f6 0%, #3b82f6 ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`;
 }
 
-// Reset button text after processing
-function resetButtonText(button, action) {
-    const buttonTexts = {
-        'remove_background': '<i class="fas fa-cut"></i> Remove Background',
-        'change_background': '<i class="fas fa-palette"></i> Change Background Color',
-        'enhance': '<i class="fas fa-magic"></i> ENHANCE IMAGE',
-        'resize': '<i class="fas fa-expand-arrows-alt"></i> Apply Resize & Rotate',
-        'quick_passport': '<i class="fas fa-bolt"></i> Quick Passport Photo',
-        'professional': '<i class="fas fa-star"></i> Professional Package'
-    };
+/* ============================================
+   BUTTON CONTROLS
+   ============================================ */
+
+function initializeControls() {
+    // Background removal
+    const removeBgBtn = document.querySelector('.remove-bg-btn');
+    if (removeBgBtn) {
+        removeBgBtn.addEventListener('click', handleRemoveBackground);
+    }
     
-    button.innerHTML = buttonTexts[action] || button.innerHTML;
-}
-
-// Setup bottom action buttons
-function setupBottomActions() {
+    // Background change
+    const changeBgBtn = document.querySelector('.change-bg-btn');
+    if (changeBgBtn) {
+        changeBgBtn.addEventListener('click', handleChangeBackground);
+    }
+    
+    // Resize application
+    const applyResizeBtn = document.querySelector('.apply-resize-btn');
+    if (applyResizeBtn) {
+        applyResizeBtn.addEventListener('click', handleApplyResize);
+    }
+    
+    // Face alignment
+    const autoAlignBtn = document.querySelector('.auto-align-btn');
+    if (autoAlignBtn) {
+        autoAlignBtn.addEventListener('click', handleAutoAlign);
+    }
+    
+    // Detect positioning
+    const detectPositioningBtn = document.querySelector('.detect-positioning-btn');
+    if (detectPositioningBtn) {
+        detectPositioningBtn.addEventListener('click', handleDetectPositioning);
+    }
+    
+    // Enhancement
+    const enhanceBtn = document.querySelector('.enhance-btn');
+    if (enhanceBtn) {
+        enhanceBtn.addEventListener('click', handleEnhancement);
+    }
+    
+    // Head size controls
+    const sizeBtns = document.querySelectorAll('.size-btn');
+    sizeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const fit = e.target.getAttribute('data-fit');
+            handleHeadSizeAdjustment(fit);
+        });
+    });
+    
+    // Tilt controls
+    const tiltApplyBtn = document.querySelector('.tilt-apply-btn');
+    if (tiltApplyBtn) {
+        tiltApplyBtn.addEventListener('click', handleTiltAdjustment);
+    }
+    
+    // Quick action buttons
+    const passportBtn = document.querySelector('.quick-btn.passport');
+    const professionalBtn = document.querySelector('.quick-btn.professional');
+    
+    if (passportBtn) {
+        passportBtn.addEventListener('click', () => handleQuickAction('passport'));
+    }
+    
+    if (professionalBtn) {
+        professionalBtn.addEventListener('click', () => handleQuickAction('professional'));
+    }
+    
+    // Bottom action buttons (Upload New, Reset All, Go Download Professional)
     const uploadNewBtn = document.querySelector('.upload-new-btn');
     const resetAllBtn = document.querySelector('.reset-all-btn');
-    const downloadBtn = document.querySelector('.download-professional-btn');
+    const downloadProfessionalBtn = document.querySelector('.download-professional-btn');
     
     if (uploadNewBtn) {
-        uploadNewBtn.addEventListener('click', () => {
-            window.location.href = '/';
-        });
+        uploadNewBtn.addEventListener('click', handleUploadNewPhoto);
     }
     
     if (resetAllBtn) {
-        resetAllBtn.addEventListener('click', () => {
-            // Reset all sliders
-            document.querySelectorAll('.enhancement-slider').forEach(slider => {
-                slider.value = slider.min || 0;
-                const valueDisplay = slider.nextElementSibling;
-                if (valueDisplay && valueDisplay.classList.contains('slider-value')) {
-                    valueDisplay.textContent = slider.value;
-                }
-            });
-            
-            // Reset image filters
-            const image = document.getElementById('previewImage');
-            if (image) {
-                image.style.filter = 'none';
-            }
-            
-            // Reset form values
-            document.getElementById('photoSize').value = 'US';
-            document.getElementById('dpiSetting').value = '300';
-            document.getElementById('customWidth').value = '';
-            document.getElementById('customHeight').value = '';
-            
-            // Reset color selection
-            document.querySelectorAll('.color-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            document.querySelector('.color-option[data-color="white"]')?.classList.add('selected');
-            
-            showToast('All settings reset to defaults', 'info');
-        });
+        resetAllBtn.addEventListener('click', handleResetAll);
     }
     
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => {
-            if (previewState.processedFilename) {
-                window.location.href = `/result/${previewState.processedFilename}`;
-            } else {
-                showToast('Please process the image first', 'warning');
-            }
+    if (downloadProfessionalBtn) {
+        downloadProfessionalBtn.addEventListener('click', handleGoDownloadProfessional);
+    }
+    
+    // Legacy action buttons - REMOVED to prevent conflicts with new handlers
+    // The .action-btn.primary and .action-btn.secondary classes are now handled by:
+    // - .upload-new-btn -> handleUploadNewPhoto()
+    // - .reset-all-btn -> handleResetAll() 
+    // - .download-professional-btn -> handleGoDownloadProfessional()
+}
+
+/* ============================================
+   ACTION HANDLERS
+   ============================================ */
+
+async function handleRemoveBackground() {
+    try {
+        showLoadingOverlay('Removing background...');
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        const response = await fetch(`/process/remove_background/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage('Background removed successfully!');
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+            }
+        } else {
+            throw new Error(result.error || 'Failed to remove background');
+        }
+        
+    } catch (error) {
+        console.error('Background removal error:', error);
+        showErrorMessage('Failed to remove background: ' + error.message);
+    } finally {
+        hideLoadingOverlay();
     }
 }
 
-// Setup select dropdowns
-function setupSelectDropdowns() {
-    const photoSizeSelect = document.getElementById('photoSize');
-    const dpiSelect = document.getElementById('dpiSetting');
+async function handleChangeBackground() {
+    console.log('🎨 Background change clicked!');
     
-    if (photoSizeSelect) {
-        photoSizeSelect.addEventListener('change', function() {
-            updateDimensionsDisplay(this.value);
-        });
+    // Get selected color from various sources
+    let selectedColor = null;
+    
+    // Check for selected preset color
+    const selectedCircle = document.querySelector('.color-circle.selected');
+    console.log('Selected circle:', selectedCircle);
+    if (selectedCircle) {
+        selectedColor = selectedCircle.getAttribute('data-color');
+        console.log('Color from selected circle:', selectedColor);
     }
     
-    if (dpiSelect) {
-        dpiSelect.addEventListener('change', function() {
-            updatePixelSizeDisplay();
-        });
+    // Check for custom color input
+    if (!selectedColor) {
+        const hexInput = document.querySelector('.hex-input');
+        console.log('Hex input:', hexInput?.value);
+        if (hexInput && hexInput.value.trim()) {
+            selectedColor = hexInput.value.trim();
+            console.log('Color from hex input:', selectedColor);
+        }
     }
     
-    // Initialize display
-    updateDimensionsDisplay('US');
+    // Check for color picker value
+    if (!selectedColor) {
+        const colorPicker = document.querySelector('.color-picker');
+        console.log('Color picker value:', colorPicker?.value);
+        if (colorPicker && colorPicker.value !== '#ffffff') {
+            selectedColor = colorPicker.value;
+            console.log('Color from color picker:', selectedColor);
+        }
+    }
+    
+    // Fallback to state values
+    if (!selectedColor) {
+        selectedColor = previewState.customColor || previewState.selectedColors[0];
+        console.log('Color from state:', selectedColor);
+    }
+    
+    // Ensure we have a valid color - use white as default
+    if (!selectedColor) {
+        selectedColor = '#ffffff';
+        console.log('Using default white color');
+    }
+    
+    console.log('Final selected color for background change:', selectedColor);
+    
+    // Show user notification about the color being used
+    showInfoMessage(`Changing background to ${selectedColor}...`);
+    
+    try {
+        showLoadingOverlay('Changing background...');
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        const response = await fetch(`/process/change_background/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ color: selectedColor })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(`Background changed to ${selectedColor}!`);
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                // Force a complete page refresh to ensure the new image loads
+                setTimeout(() => {
+                    window.location.href = `/preview/${result.output_filename}`;
+                }, 1000);
+            }
+        } else {
+            throw new Error(result.error || 'Failed to change background');
+        }
+        
+    } catch (error) {
+        console.error('Background change error:', error);
+        showErrorMessage('Failed to change background: ' + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
 }
 
-// Update dimensions display
-function updateDimensionsDisplay(country) {
-    const helpText = document.querySelector('.dpi-selection .help-text');
-    if (!helpText) return;
+async function handleApplyResize() {
+    const widthInput = document.querySelector('#resize-width');
+    const heightInput = document.querySelector('#resize-height');
     
-    const dimensions = {
-        'US': '1200x1500 pixels',
-        'UK': '1378x1772 pixels', 
-        'INDIA': '1378x1378 pixels',
-        'CANADA': '1378x1772 pixels',
-        'GERMANY': '1378x1772 pixels',
-        'FRANCE': '1378x1772 pixels',
-        'AUSTRALIA': '1378x1772 pixels',
-        'JAPAN': '1378x1772 pixels'
+    if (!widthInput || !heightInput) {
+        showErrorMessage('Resize controls not found');
+        return;
+    }
+    
+    const width = parseInt(widthInput.value);
+    const height = parseInt(heightInput.value);
+    
+    if (!width || !height || width <= 0 || height <= 0) {
+        showErrorMessage('Please enter valid dimensions');
+        return;
+    }
+    
+    try {
+        showLoadingOverlay('Resizing image...');
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        const response = await fetch(`/process/resize/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                country: 'US', // Default for now
+                width: width,
+                height: height
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(`Image resized to ${width}x${height}!`);
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+            }
+        } else {
+            throw new Error(result.error || 'Failed to resize image');
+        }
+        
+    } catch (error) {
+        console.error('Resize error:', error);
+        showErrorMessage('Failed to resize image: ' + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
+async function handleAutoAlign() {
+    if (!previewState.currentImage) {
+        showErrorMessage('Please select an image first');
+        return;
+    }
+    
+    // Auto-align face feature is not yet implemented in the backend
+    showInfoMessage('Auto-align face feature is coming soon!');
+    console.log('Auto-align face feature requested but not yet implemented');
+}
+
+async function handleDetectPositioning() {
+    // Show passport photo guidelines popup
+    showPassportGuidelines();
+}
+
+async function handleEnhancement() {
+    // Check if any slider values have been changed from default (0)
+    const hasChanges = Object.values(previewState.sliderValues).some(value => value !== 0);
+    
+    if (!hasChanges) {
+        showWarningMessage('Please adjust at least one enhancement slider before applying changes.');
+        return;
+    }
+    
+    // Log the values being sent for debugging
+    console.log('Enhancement values to apply:', previewState.sliderValues);
+    
+    try {
+        showLoadingOverlay('Enhancing image...');
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        const response = await fetch(`/process/enhance/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(previewState.sliderValues)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage('Image enhanced successfully!');
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+            }
+        } else {
+            throw new Error(result.error || 'Failed to enhance image');
+        }
+        
+    } catch (error) {
+        console.error('Enhancement error:', error);
+        showErrorMessage('Failed to enhance image: ' + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
+function handleHeadSizeAdjustment(fit) {
+    if (!previewState.currentImage) {
+        showErrorMessage('Please select an image first');
+        return;
+    }
+    
+    console.log('Adjusting head size:', fit);
+    showInfoMessage(`Head size adjusted: ${fit}`);
+}
+
+function handleTiltAdjustment() {
+    const tiltInput = document.querySelector('.tilt-input');
+    if (!tiltInput) return;
+    
+    const degrees = parseInt(tiltInput.value) || 0;
+    
+    if (degrees < -360 || degrees > 360) {
+        showErrorMessage('Tilt angle must be between -360 and 360 degrees');
+        return;
+    }
+    
+    previewState.rotation += degrees;
+    
+    const image = document.querySelector('.preview-image');
+    if (image) {
+        image.style.transform = `scale(${previewState.zoom}) rotate(${previewState.rotation}deg)`;
+    }
+    
+    showSuccessMessage(`Image tilted by ${degrees} degrees`);
+    tiltInput.value = '0';
+}
+
+async function handleQuickAction(type) {
+    try {
+        showLoadingOverlay(`Applying ${type} preset...`);
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        // Map the action types to correct endpoint names
+        let endpoint = '';
+        if (type === 'passport') {
+            endpoint = 'quick_passport';
+        } else if (type === 'professional') {
+            endpoint = 'professional';
+        } else {
+            endpoint = type;
+        }
+        
+        const response = await fetch(`/process/${endpoint}/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} preset applied!`);
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+            }
+        } else {
+            throw new Error(result.error || `Failed to apply ${type} preset`);
+        }
+        
+    } catch (error) {
+        console.error('Quick action error:', error);
+        showErrorMessage(`Failed to apply ${type} preset: ` + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
+async function handleSaveImage() {
+    if (!previewState.currentImage) {
+        showErrorMessage('No image to save');
+        return;
+    }
+    
+    try {
+        showLoadingOverlay('Saving image...');
+        
+        const formData = new FormData();
+        formData.append('action', 'save_image');
+        formData.append('image_data', previewState.currentImage);
+        
+        const response = await fetch('/api/save-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage('Image saved successfully!');
+            if (result.saved_path) {
+                console.log('Image saved to:', result.saved_path);
+            }
+        } else {
+            throw new Error(result.error || 'Failed to save image');
+        }
+        
+    } catch (error) {
+        console.error('Save error:', error);
+        showErrorMessage('Failed to save image: ' + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
+function handleDownloadImage() {
+    if (!previewState.currentImage) {
+        showErrorMessage('No image to download');
+        return;
+    }
+    
+    try {
+        const link = document.createElement('a');
+        link.href = previewState.currentImage;
+        link.download = `pixport-processed-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showSuccessMessage('Image download started!');
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        showErrorMessage('Failed to download image: ' + error.message);
+    }
+}
+
+/* ============================================
+   MAIN ACTION BUTTON HANDLERS
+   ============================================ */
+
+// Handler for "Upload New Photo" button
+function handleUploadNewPhoto() {
+    console.log('Upload New Photo clicked');
+    
+    try {
+        // Show confirmation if user has been working on an image
+        if (previewState.currentImage && previewState.currentImage !== previewState.originalImage) {
+            const confirmUpload = confirm('You have unsaved changes. Are you sure you want to upload a new photo? Your current work will be lost.');
+            if (!confirmUpload) {
+                return;
+            }
+        }
+        
+        showInfoMessage('Redirecting to upload page...');
+        
+        // Redirect to home page for new upload (no download activity)
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 500);
+        
+    } catch (error) {
+        console.error('Upload new photo error:', error);
+        showErrorMessage('Failed to redirect to upload page');
+    }
+}
+
+// Handler for "Reset All" button  
+function handleResetAll() {
+    console.log('Reset All clicked');
+    
+    try {
+        // Show confirmation dialog
+        const confirmReset = confirm('This will reset all changes and return to the original image. Are you sure?');
+        if (!confirmReset) {
+            return;
+        }
+        
+        showInfoMessage('Resetting all changes...');
+        
+        // Reset all state values
+        previewState.zoom = 1;
+        previewState.rotation = 0;
+        previewState.selectedColors = [];
+        previewState.customColor = '#ffffff';
+        
+        // Reset all slider values
+        Object.keys(previewState.sliderValues).forEach(key => {
+            previewState.sliderValues[key] = 0;
+        });
+        
+        // Reset UI elements
+        resetUIElements();
+        
+        // If we have an original image, restore it
+        if (previewState.originalImage) {
+            previewState.currentImage = previewState.originalImage;
+            const previewImage = document.querySelector('.preview-image');
+            if (previewImage) {
+                previewImage.src = previewState.originalImage;
+                previewImage.style.transform = 'scale(1) rotate(0deg)';
+            }
+        } else {
+            // If no original image stored, reload the original file from URL
+            const currentFilename = getCurrentFilename();
+            const originalUrl = `/static/uploads/${currentFilename}`;
+            
+            const previewImage = document.querySelector('.preview-image');
+            if (previewImage) {
+                previewImage.src = originalUrl;
+                previewImage.style.transform = 'scale(1) rotate(0deg)';
+                previewState.currentImage = originalUrl;
+            }
+        }
+        
+        showSuccessMessage('All changes have been reset!');
+        
+        // Update image info
+        setTimeout(() => {
+            updateImageInfo();
+        }, 500);
+        
+    } catch (error) {
+        console.error('Reset all error:', error);
+        showErrorMessage('Failed to reset changes: ' + error.message);
+    }
+}
+
+// Handler for "Go Download Professional" button
+function handleGoDownloadProfessional() {
+    console.log('Go Download Professional clicked');
+    
+    try {
+        if (!previewState.currentImage) {
+            showErrorMessage('Please process an image first before going to results page');
+            return;
+        }
+        
+        showInfoMessage('Redirecting to results page...');
+        
+        // Extract filename from current image URL or use current URL
+        const currentFilename = getCurrentFilename();
+        
+        // Redirect to result page with current filename (singular "result", not "results")
+        setTimeout(() => {
+            window.location.href = `/result/${currentFilename}`;
+        }, 500);
+        
+    } catch (error) {
+        console.error('Go download professional error:', error);
+        showErrorMessage('Failed to redirect to results page: ' + error.message);
+    }
+}
+
+// Helper function to reset UI elements
+function resetUIElements() {
+    // Reset color selections
+    document.querySelectorAll('.color-circle').forEach(circle => {
+        circle.classList.remove('selected');
+    });
+    
+    // Reset hex input
+    const hexInput = document.querySelector('.hex-input');
+    if (hexInput) {
+        hexInput.value = '#ffffff';
+    }
+    
+    // Reset color picker
+    const colorPicker = document.querySelector('.color-picker');
+    if (colorPicker) {
+        colorPicker.value = '#ffffff';
+    }
+    
+    // Reset resize inputs
+    const widthInput = document.querySelector('#resize-width');
+    const heightInput = document.querySelector('#resize-height');
+    if (widthInput) widthInput.value = '';
+    if (heightInput) heightInput.value = '';
+    
+    // Reset rotation input
+    const tiltInput = document.querySelector('.tilt-input');
+    if (tiltInput) {
+        tiltInput.value = '0';
+    }
+    
+    // Reset all enhancement sliders
+    document.querySelectorAll('.enhancement-slider').forEach(slider => {
+        slider.value = 0;
+        const valueDisplay = slider.parentElement.querySelector('.slider-value');
+        if (valueDisplay) {
+            valueDisplay.textContent = '0';
+        }
+        // Reset slider background
+        slider.style.background = 'linear-gradient(to top, #3b82f6 0%, #3b82f6 50%, #e5e7eb 50%, #e5e7eb 100%)';
+    });
+    
+    // Reset zoom display
+    const zoomDisplay = document.querySelector('.zoom-level');
+    if (zoomDisplay) {
+        zoomDisplay.textContent = '100%';
+    }
+}
+
+/* ============================================
+   FORM HANDLING
+   ============================================ */
+
+function initializeFormHandling() {
+    // Size/format select changes
+    const formatSelect = document.querySelector('#output-format');
+    const sizeSelect = document.querySelector('#output-size');
+    
+    if (formatSelect) {
+        formatSelect.addEventListener('change', handleFormatChange);
+    }
+    
+    if (sizeSelect) {
+        sizeSelect.addEventListener('change', handleSizeChange);
+    }
+    
+    // Numeric input validations
+    const numericInputs = document.querySelectorAll('input[type="number"]');
+    numericInputs.forEach(input => {
+        input.addEventListener('input', validateNumericInput);
+    });
+}
+
+function handleFormatChange(e) {
+    const format = e.target.value;
+    console.log('Output format changed to:', format);
+    
+    // Update any format-specific options
+    updateFormatOptions(format);
+}
+
+function handleSizeChange(e) {
+    const size = e.target.value;
+    console.log('Output size changed to:', size);
+    
+    // Auto-fill width/height inputs based on preset
+    updateSizeInputs(size);
+}
+
+function updateFormatOptions(format) {
+    // Add format-specific handling if needed
+    const qualityOptions = document.querySelector('.quality-options');
+    
+    if (qualityOptions) {
+        // Show quality options for JPEG, hide for PNG
+        qualityOptions.style.display = format === 'jpeg' ? 'block' : 'none';
+    }
+}
+
+function updateSizeInputs(size) {
+    const widthInput = document.querySelector('#resize-width');
+    const heightInput = document.querySelector('#resize-height');
+    
+    if (!widthInput || !heightInput) return;
+    
+    const presets = {
+        'passport': { width: 600, height: 600 },
+        'visa': { width: 600, height: 600 },
+        'id': { width: 480, height: 600 },
+        'resume': { width: 300, height: 400 },
+        'linkedin': { width: 400, height: 400 },
+        'custom': { width: '', height: '' }
     };
     
-    helpText.textContent = `Output size: ${dimensions[country] || dimensions.US} for ${country} size`;
-}
-
-// Setup rotate controls
-function setupRotateControls() {
-    const rotateButtons = document.querySelectorAll('.rotate-btn');
-    
-    rotateButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const rotation = parseInt(this.dataset.rotate);
-            const image = document.getElementById('previewImage');
-            
-            if (image) {
-                const currentTransform = image.style.transform || '';
-                const currentRotation = currentTransform.match(/rotate\(([^)]+)\)/)?.[1] || '0deg';
-                const currentValue = parseInt(currentRotation) || 0;
-                const newRotation = currentValue + rotation;
-                
-                image.style.transform = `${currentTransform.replace(/rotate\([^)]*\)/, '')} rotate(${newRotation}deg)`;
-                
-                showToast(`Image rotated ${rotation > 0 ? 'right' : 'left'}`, 'info');
-            }
-        });
-    });
-}
-
-// Setup fit controls
-function setupFitControls() {
-    const fitButtons = document.querySelectorAll('.fit-btn');
-    
-    fitButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const fitType = this.dataset.fit;
-            const image = document.getElementById('previewImage');
-            
-            if (image && fitType) {
-                const currentScale = previewState.zoomLevel || 1;
-                let newScale = currentScale;
-                
-                if (fitType === 'head-smaller') {
-                    newScale = Math.max(0.5, currentScale * 0.9);
-                } else if (fitType === 'head-larger') {
-                    newScale = Math.min(3, currentScale * 1.1);
-                }
-                
-                previewState.zoomLevel = newScale;
-                updateImageTransform();
-                
-                showToast(`Head size ${fitType === 'head-smaller' ? 'decreased' : 'increased'}`, 'info');
-            }
-        });
-    });
-}
-
-// Setup color palette
-function setupColorPalette() {
-    const colorOptions = document.querySelectorAll('.color-palette .color-option');
-    
-    colorOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove selected class from all options
-            colorOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Add selected class to clicked option
-            this.classList.add('selected');
-            
-            // Visual feedback
-            this.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                this.style.transform = '';
-            }, 200);
-        });
-    });
-    
-    // Set default selection
-    const defaultColor = document.querySelector('.color-palette .color-option[data-color="white"]');
-    if (defaultColor) {
-        defaultColor.classList.add('selected');
+    if (presets[size]) {
+        widthInput.value = presets[size].width;
+        heightInput.value = presets[size].height;
     }
 }
 
-// Detect positioning guidelines (placeholder function)
-function detectPositioningGuidelines() {
-    showToast('Positioning guidelines detected - face alignment optimized', 'success');
+function validateNumericInput(e) {
+    const input = e.target;
+    const value = parseInt(input.value);
     
-    // Add visual guidelines overlay (you can implement actual face detection here)
-    const container = document.querySelector('.image-container');
-    if (container && !container.querySelector('.guidelines-overlay')) {
-        const overlay = document.createElement('div');
-        overlay.className = 'guidelines-overlay';
-        overlay.style.cssText = `
+    // Skip validation for resize inputs - allow unlimited values
+    if (input.id === 'resize-width' || input.id === 'resize-height') {
+        // Only check for negative values
+        if (value < 0) {
+            input.value = 0;
+            showWarningMessage('Size cannot be negative');
+        }
+        return;
+    }
+    
+    const min = parseInt(input.getAttribute('min')) || 0;
+    const max = parseInt(input.getAttribute('max')) || 9999;
+    
+    if (isNaN(value)) return;
+    
+    if (value < min) {
+        input.value = min;
+        showWarningMessage(`Minimum value is ${min}`);
+    } else if (value > max) {
+        input.value = max;
+        showWarningMessage(`Maximum value is ${max}`);
+    }
+}
+
+/* ============================================
+   UTILITY FUNCTIONS
+   ============================================ */
+
+function updatePreviewImage(imageData) {
+    const previewImage = document.querySelector('.preview-image');
+    if (previewImage) {
+        previewImage.src = imageData;
+        previewState.currentImage = imageData;
+        updateImageInfo();
+    }
+}
+
+async function updateImageInfo() {
+    const previewImage = document.querySelector('.preview-image');
+    if (!previewImage || !previewImage.src) {
+        console.log('No preview image found or no source');
+        return;
+    }
+    
+    console.log('Updating image info for:', previewImage.src);
+    
+    // Get filename from current URL or image src
+    const filename = getCurrentFilename();
+    console.log('Getting image info for filename:', filename);
+    
+    try {
+        // First fetch detailed image info from API
+        const response = await fetch(`/api/image-info/${filename}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                // Update all info items with API data
+                const originalName = getOriginalFilename(data.filename);
+                const friendlyName = generateFriendlyCurrentName(data.filename);
+                
+                console.log('🔍 Debug Info:');
+                console.log('  Raw filename:', data.filename);
+                console.log('  Original name:', originalName);
+                console.log('  Friendly name:', friendlyName);
+                console.log('  UUID detected:', isUuidBasedFilename(data.filename));
+                
+                updateInfoItem('original name', originalName);
+                updateInfoItem('current name', friendlyName);
+                updateInfoItem('dimensions', `${data.width} × ${data.height}px`);
+                updateInfoItem('aspect ratio', calculateAspectRatio(data.width, data.height));
+                updateInfoItem('format', data.format || 'JPEG');
+                console.log('✅ Updated image info from API');
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch image info from API:', error);
+    }
+    
+    // Fallback to loading image directly and getting basic info
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('Image loaded successfully (fallback):', this.naturalWidth, 'x', this.naturalHeight);
+        
+        // Update with fallback data
+        updateInfoItem('original name', getOriginalFilename(filename));
+        updateInfoItem('current name', generateFriendlyCurrentName(filename));
+        updateInfoItem('dimensions', `${this.naturalWidth} × ${this.naturalHeight}px`);
+        updateInfoItem('aspect ratio', calculateAspectRatio(this.naturalWidth, this.naturalHeight));
+        
+        // Determine format from URL
+        let format = 'JPEG';
+        if (previewImage.src.includes('.png')) {
+            format = 'PNG';
+        } else if (previewImage.src.includes('.webp')) {
+            format = 'WebP';
+        }
+        updateInfoItem('format', format);
+        console.log('Updated image info (fallback)');
+    };
+    
+    img.onerror = function() {
+        console.error('Failed to load image for info update:', previewImage.src);
+        // Show error state
+        updateInfoItem('original name', 'Error loading');
+        updateInfoItem('current name', 'Error loading');
+        updateInfoItem('dimensions', 'Error loading');
+        updateInfoItem('aspect ratio', 'Error loading');
+        updateInfoItem('format', 'Error loading');
+    };
+    
+    // Set crossOrigin to handle potential CORS issues
+    img.crossOrigin = 'anonymous';
+    img.src = previewImage.src;
+}
+
+// Helper function to update individual info items
+function updateInfoItem(labelText, value) {
+    const infoItems = document.querySelectorAll('.info-item');
+    infoItems.forEach(item => {
+        const label = item.querySelector('.info-label');
+        const valueElement = item.querySelector('.info-value');
+        
+        if (label && valueElement && label.textContent.toLowerCase().includes(labelText.toLowerCase())) {
+            valueElement.textContent = value;
+            console.log(`Updated ${labelText}:`, value);
+        }
+    });
+}
+
+function calculateAspectRatio(width, height) {
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(width, height);
+    return `${width / divisor}:${height / divisor}`;
+}
+
+function displayPositioningInfo(info) {
+    // Create or update positioning info display
+    let infoDiv = document.querySelector('.positioning-info');
+    
+    if (!infoDiv) {
+        infoDiv = document.createElement('div');
+        infoDiv.className = 'positioning-info';
+        infoDiv.style.cssText = `
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        `;
+        
+        const alignmentCard = document.querySelector('.control-card:has(.auto-align-btn)');
+        if (alignmentCard) {
+            alignmentCard.querySelector('.card-body').appendChild(infoDiv);
+        }
+    }
+    
+    infoDiv.innerHTML = `
+        <h4 style="margin: 0 0 12px 0; color: #374151; font-weight: 600;">Face Positioning Analysis</h4>
+        <div style="display: grid; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>Face Position:</span>
+                <strong>${info.position || 'Centered'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Head Tilt:</span>
+                <strong>${info.tilt || '0°'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Face Size:</span>
+                <strong>${info.size || 'Optimal'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Eye Level:</span>
+                <strong>${info.eye_level || 'Aligned'}</strong>
+            </div>
+        </div>
+    `;
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showErrorMessage('Please select a valid image file');
+        return;
+    }
+    
+    if (file.size > CONFIG.maxFileSize) {
+        showErrorMessage('File size too large. Maximum size is 10MB');
+        return;
+    }
+    
+    if (!CONFIG.allowedFormats.includes(file.type)) {
+        showErrorMessage('Unsupported file format. Please use JPEG, PNG, or WebP');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        updatePreviewImage(e.target.result);
+        previewState.originalImage = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ============================================
+   PASSPORT GUIDELINES POPUP
+   ============================================ */
+
+function showPassportGuidelines() {
+    // Remove any existing guidelines popup
+    const existingPopup = document.querySelector('.passport-guidelines-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    // Create the guidelines popup
+    const popup = document.createElement('div');
+    popup.className = 'passport-guidelines-popup';
+    popup.innerHTML = `
+        <div class="guidelines-overlay"></div>
+        <div class="guidelines-content">
+            <div class="guidelines-header">
+                <h2><i class="fas fa-id-card"></i> Passport Photo Guidelines</h2>
+                <button class="guidelines-close-btn" onclick="closePassportGuidelines()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="guidelines-body">
+                <div class="guidelines-tabs">
+                    <button class="tab-btn active" onclick="showGuidelinesTab('general')">General Rules</button>
+                    <button class="tab-btn" onclick="showGuidelinesTab('composition')">Composition</button>
+                    <button class="tab-btn" onclick="showGuidelinesTab('quality')">Photo Quality</button>
+                    <button class="tab-btn" onclick="showGuidelinesTab('countries')">Country Specific</button>
+                </div>
+                
+                <!-- General Rules Tab -->
+                <div class="tab-content active" id="general-tab">
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-user"></i> Face & Expression</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>Neutral Expression:</strong> Keep a natural, neutral expression with mouth closed
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>Eyes Open:</strong> Both eyes must be clearly visible and open
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>Look Straight:</strong> Look directly at the camera
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">❌</div>
+                                <div class="guideline-text">
+                                    <strong>No Smiling:</strong> Avoid smiling or showing teeth
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-eye"></i> Head Position</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>Head Straight:</strong> Keep your head straight and level
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>Face the Camera:</strong> Face directly towards the camera
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">❌</div>
+                                <div class="guideline-text">
+                                    <strong>No Tilting:</strong> Don't tilt your head to any side
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Composition Tab -->
+                <div class="tab-content" id="composition-tab">
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-crop-alt"></i> Photo Dimensions</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">📏</div>
+                                <div class="guideline-text">
+                                    <strong>Standard Size:</strong> 2x2 inches (51x51mm) for most countries
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">📏</div>
+                                <div class="guideline-text">
+                                    <strong>Head Size:</strong> Head should be 1-1.375 inches (25-35mm) from bottom of chin to top of head
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">🎯</div>
+                                <div class="guideline-text">
+                                    <strong>Centering:</strong> Head should be centered in the frame
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-palette"></i> Background</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">⚪</div>
+                                <div class="guideline-text">
+                                    <strong>White/Light Background:</strong> Use plain white or off-white background
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">✅</div>
+                                <div class="guideline-text">
+                                    <strong>No Patterns:</strong> Background must be plain, no textures or patterns
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">❌</div>
+                                <div class="guideline-text">
+                                    <strong>No Shadows:</strong> Avoid shadows on face or background
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Photo Quality Tab -->
+                <div class="tab-content" id="quality-tab">
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-camera"></i> Technical Requirements</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">🔍</div>
+                                <div class="guideline-text">
+                                    <strong>High Resolution:</strong> Minimum 600x600 pixels, 300 DPI recommended
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">🌟</div>
+                                <div class="guideline-text">
+                                    <strong>Sharp Focus:</strong> Photo must be in sharp focus, not blurry
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">💡</div>
+                                <div class="guideline-text">
+                                    <strong>Good Lighting:</strong> Even lighting on face, no harsh shadows
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">🎨</div>
+                                <div class="guideline-text">
+                                    <strong>Natural Colors:</strong> Accurate skin tone, no color casts
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-file-image"></i> File Format</h3>
+                        <div class="guidelines-grid">
+                            <div class="guideline-item">
+                                <div class="guideline-icon">📄</div>
+                                <div class="guideline-text">
+                                    <strong>JPEG Format:</strong> Save as JPEG with high quality (90% or higher)
+                                </div>
+                            </div>
+                            <div class="guideline-item">
+                                <div class="guideline-icon">💾</div>
+                                <div class="guideline-text">
+                                    <strong>File Size:</strong> Keep file size between 240KB - 1MB
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Country Specific Tab -->
+                <div class="tab-content" id="countries-tab">
+                    <div class="guidelines-section">
+                        <h3><i class="fas fa-flag"></i> Different Country Requirements</h3>
+                        <div class="country-requirements">
+                            <div class="country-item">
+                                <div class="country-flag">🇺🇸</div>
+                                <div class="country-details">
+                                    <strong>United States:</strong>
+                                    <ul>
+                                        <li>2x2 inches (51x51mm)</li>
+                                        <li>Head 1-1.375 inches tall</li>
+                                        <li>White/off-white background</li>
+                                        <li>Taken within last 6 months</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="country-item">
+                                <div class="country-flag">🇬🇧</div>
+                                <div class="country-details">
+                                    <strong>United Kingdom:</strong>
+                                    <ul>
+                                        <li>45x35mm (1.77x1.38 inches)</li>
+                                        <li>Head 29-34mm tall</li>
+                                        <li>Plain light grey or cream background</li>
+                                        <li>No shadows on face or background</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="country-item">
+                                <div class="country-flag">🇮🇳</div>
+                                <div class="country-details">
+                                    <strong>India:</strong>
+                                    <ul>
+                                        <li>35x35mm square format</li>
+                                        <li>Head 25-30mm from chin to crown</li>
+                                        <li>White background preferred</li>
+                                        <li>Matt finish, not glossy</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="country-item">
+                                <div class="country-flag">🇨🇦</div>
+                                <div class="country-details">
+                                    <strong>Canada:</strong>
+                                    <ul>
+                                        <li>50x70mm (2x2.75 inches)</li>
+                                        <li>Head 31-36mm from chin to crown</li>
+                                        <li>Plain white or light colored background</li>
+                                        <li>Neutral expression, mouth closed</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guidelines-footer">
+                <div class="footer-note">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Always check with the specific embassy or consulate for the most current requirements as they may change.</span>
+                </div>
+                <button class="guidelines-btn primary" onclick="closePassportGuidelines()">
+                    <i class="fas fa-check"></i> Got it, Thanks!
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Add styles for the popup
+    const styles = `
+        <style>
+        .passport-guidelines-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .guidelines-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            border: 2px solid #6366f1;
-            border-radius: 8px;
-            opacity: 0.7;
-        `;
-        container.appendChild(overlay);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
         
-        // Remove after 3 seconds
+        .guidelines-content {
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .guidelines-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .guidelines-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .guidelines-header h2 i {
+            margin-right: 12px;
+        }
+        
+        .guidelines-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .guidelines-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .guidelines-body {
+            padding: 24px;
+        }
+        
+        .guidelines-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 20px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            color: #6b7280;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .tab-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .guidelines-section {
+            margin-bottom: 32px;
+        }
+        
+        .guidelines-section h3 {
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .guidelines-section h3 i {
+            margin-right: 12px;
+            color: #3b82f6;
+        }
+        
+        .guidelines-grid {
+            display: grid;
+            gap: 16px;
+        }
+        
+        .guideline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .guideline-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .guideline-text {
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        .guideline-text strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .country-requirements {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .country-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .country-flag {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        
+        .country-details strong {
+            color: #1f2937;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .country-details ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #6b7280;
+        }
+        
+        .country-details li {
+            margin-bottom: 4px;
+        }
+        
+        .guidelines-footer {
+            padding: 24px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+            border-radius: 0 0 16px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .footer-note i {
+            color: #3b82f6;
+            flex-shrink: 0;
+        }
+        
+        .guidelines-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .guidelines-btn.primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .guidelines-btn.primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .guidelines-content {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .guidelines-header,
+            .guidelines-body,
+            .guidelines-footer {
+                padding: 16px;
+            }
+            
+            .guidelines-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                min-width: auto;
+            }
+            
+            .guidelines-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .footer-note {
+                min-width: auto;
+                text-align: center;
+            }
+        }
+        </style>
+    `;
+    
+    // Add styles to head if not already present
+    if (!document.querySelector('#passport-guidelines-styles')) {
+        const styleSheet = document.createElement('div');
+        styleSheet.id = 'passport-guidelines-styles';
+        styleSheet.innerHTML = styles;
+        document.head.appendChild(styleSheet);
+    }
+    
+    // Add popup to body
+    document.body.appendChild(popup);
+    
+    // Close popup when clicking overlay
+    popup.querySelector('.guidelines-overlay').addEventListener('click', closePassportGuidelines);
+    
+    // Prevent body scroll when popup is open
+    document.body.style.overflow = 'hidden';
+}
+
+function closePassportGuidelines() {
+    const popup = document.querySelector('.passport-guidelines-popup');
+    if (popup) {
+        popup.style.animation = 'fadeOut 0.3s ease-in';
         setTimeout(() => {
-            overlay.remove();
-        }, 3000);
+            popup.remove();
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }, 300);
     }
 }
 
-// Setup detect positioning button
-document.addEventListener('DOMContentLoaded', function() {
-    const detectBtn = document.querySelector('.detect-positioning-btn');
-    if (detectBtn) {
-        detectBtn.addEventListener('click', detectPositioningGuidelines);
+function showGuidelinesTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+// Make functions globally available
+window.showPassportGuidelines = showPassportGuidelines;
+window.closePassportGuidelines = closePassportGuidelines;
+window.showGuidelinesTab = showGuidelinesTab;
+
+/* ============================================
+   UI FEEDBACK FUNCTIONS
+   ============================================ */
+
+function showLoadingOverlay(message = 'Processing...') {
+    let overlay = document.querySelector('.loading-overlay');
+    
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <div class="loading-text">${message}</div>
+                <div class="loading-subtext">Please wait while we process your image</div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        const loadingText = overlay.querySelector('.loading-text');
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
+        overlay.style.display = 'flex';
+    }
+    
+    previewState.isProcessing = true;
+    updateButtonStates();
+}
+
+function hideLoadingOverlay() {
+    const overlay = document.querySelector('.loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    
+    previewState.isProcessing = false;
+    updateButtonStates();
+}
+
+function updateButtonStates() {
+    const buttons = document.querySelectorAll('button:not(.control-btn)');
+    buttons.forEach(btn => {
+        btn.disabled = previewState.isProcessing;
+    });
+}
+
+function showSuccessMessage(message) {
+    showNotification(message, 'success');
+}
+
+function showErrorMessage(message) {
+    showNotification(message, 'error');
+}
+
+function showWarningMessage(message) {
+    showNotification(message, 'warning');
+}
+
+function showInfoMessage(message) {
+    showNotification(message, 'info');
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notification
+    const existing = document.querySelector('.notification');
+    if (existing) {
+        existing.remove();
+    }
+    
+    // Create new notification
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type]};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        max-width: 400px;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+    
+    // Add CSS animations if not already present
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+/* ============================================
+   ERROR HANDLING
+   ============================================ */
+
+// Improved selective error handling to avoid interfering with normal page functionality
+let errorCount = 0;
+const MAX_ERRORS_PER_MINUTE = 3;
+let errorTimestamps = [];
+
+function shouldShowError(error) {
+    // Filter out common non-critical errors
+    const ignoredErrors = [
+        'showToast',
+        'Non-Error promise rejection captured',
+        'ResizeObserver loop limit exceeded',
+        'Script error',
+        'Network request failed',
+        'Load failed',
+        'Loading chunk'
+    ];
+    
+    if (!error || !error.message) return false;
+    
+    const errorMessage = error.message.toLowerCase();
+    if (ignoredErrors.some(ignored => errorMessage.includes(ignored.toLowerCase()))) {
+        return false;
+    }
+    
+    // Rate limiting to prevent spam
+    const now = Date.now();
+    errorTimestamps = errorTimestamps.filter(timestamp => now - timestamp < 60000); // Last minute
+    
+    if (errorTimestamps.length >= MAX_ERRORS_PER_MINUTE) {
+        return false;
+    }
+    
+    errorTimestamps.push(now);
+    return true;
+}
+
+window.addEventListener('error', (event) => {
+    console.error('Global error:', {
+        message: event.message,
+        source: event.filename,
+        line: event.lineno,
+        column: event.colno,
+        error: event.error
+    });
+    
+    // Only show user-friendly error message for critical application errors
+    if (shouldShowError(event.error) && 
+        event.error && 
+        (event.error.name === 'ReferenceError' || 
+         event.error.name === 'SyntaxError' ||
+         (event.error.name === 'TypeError' && event.error.message.includes('Cannot read')))) {
+        
+        // Show a generic error message instead of technical details
+        setTimeout(() => {
+            showErrorMessage('Something went wrong with the image processing. Please refresh the page and try again.');
+        }, 100);
     }
 });
 
-// Export for global access
-window.previewState = previewState;
-window.updatePreviewImage = updatePreviewImage;
-window.initializeEnhancedPreview = initializeEnhancedPreview;
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    
+    // Only handle promise rejections related to fetch/API calls
+    if (event.reason && 
+        (event.reason.name === 'TypeError' && event.reason.message.includes('fetch')) ||
+        (event.reason.toString().includes('Failed to fetch'))) {
+        
+        setTimeout(() => {
+            showErrorMessage('Network error occurred. Please check your connection and try again.');
+        }, 100);
+        
+        // Prevent the default unhandled rejection behavior
+        event.preventDefault();
+    }
+});
+
+/* ============================================
+   BROWSER CONSOLE TESTING
+   ============================================ */
+
+// Test function for browser console
+window.testFriendlyNaming = function(testFilename) {
+    console.log('\n🧪 Testing Friendly Naming Function');
+    console.log('=' .repeat(50));
+    
+    const filename = testFilename || getCurrentFilename();
+    console.log('Input filename:', filename);
+    
+    const originalName = getOriginalFilename(filename);
+    console.log('Original name:', originalName);
+    
+    const friendlyName = generateFriendlyCurrentName(filename);
+    console.log('Friendly name:', friendlyName);
+    
+    const isUuid = isUuidBasedFilename(filename);
+    console.log('UUID detected:', isUuid);
+    
+    const hash = hashCode(filename);
+    console.log('Hash code:', hash);
+    console.log('Version number:', Math.abs(hash) % 99 + 1);
+    
+    console.log('\n📋 Summary:');
+    console.log(`"${filename}" → "${friendlyName}"`);
+    console.log('=' .repeat(50));
+    
+    return {
+        input: filename,
+        original: originalName,
+        friendly: friendlyName,
+        isUuid: isUuid,
+        hash: hash
+    };
+};
+
+// Test with multiple examples
+window.testMultipleFilenames = function() {
+    const testCases = [
+        '12345678-1234-1234-1234-123456789012_imggg.jpg',
+        'abcd1234-5678-9abc-def0-123456789012_photo.png',
+        'test-image.jpg',
+        '12345678-1234-1234-1234-123456789012_photo_bg_white.jpg',
+        '12345678-1234-1234-1234-123456789012_portrait_enhanced.png'
+    ];
+    
+    console.log('\n🎯 Testing Multiple Filename Examples');
+    console.log('=' .repeat(60));
+    
+    testCases.forEach((filename, index) => {
+        console.log(`\nTest Case ${index + 1}:`);
+        testFriendlyNaming(filename);
+    });
+};
+
+/* ============================================
+   EXPORT FOR TESTING
+   ============================================ */
+
+// Export functions for testing purposes
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        previewState,
+        CONFIG,
+        isValidHexColor,
+        calculateAspectRatio,
+        updateZoom,
+        handleColorSelection,
+        getOriginalFilename,
+        generateFriendlyCurrentName,
+        isUuidBasedFilename,
+        hashCode
+    };
+}

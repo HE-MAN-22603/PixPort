@@ -3,7 +3,7 @@
 {% block title %}Preview - {{ filename }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/preview.css') }}">
+<link rel="stylesheet" href="{{ versioned_url_for('static', filename='css/preview.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -34,7 +34,7 @@
             <div class="image-section-centered">
                 <div class="image-preview-main">
                     <div class="image-container">
-                        <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
+                        <img src="{% if '_bg_' in filename or '_passport_' in filename or '_enhanced' in filename or '_resized' in filename %}{{ url_for('static', filename='processed/' + filename) }}{% else %}{{ url_for('static', filename='uploads/' + filename) }}{% endif %}" 
                              alt="Preview" 
                              class="preview-image"
                              id="previewImage">
@@ -48,7 +48,7 @@
                                 <button class="control-btn" data-action="zoom-out" title="Zoom Out">
                                     <i class="fas fa-search-minus"></i>
                                 </button>
-                                <button class="control-btn" data-action="reset" title="Reset View">
+                                <button class="control-btn" data-action="zoom-reset" title="Reset View">
                                     <i class="fas fa-expand"></i>
                                 </button>
                             </div>
@@ -69,7 +69,24 @@
                         <h3>Image Information</h3>
                         <ul class="info-list">
                             <li class="info-item">
-                                <span class="info-label">Loading...</span>
+                                <span class="info-label">Original Name:</span>
+                                <span class="info-value">Loading...</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Current Name:</span>
+                                <span class="info-value">Loading...</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Dimensions:</span>
+                                <span class="info-value">Loading...</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Aspect Ratio:</span>
+                                <span class="info-value">Loading...</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Format:</span>
+                                <span class="info-value">Loading...</span>
                             </li>
                         </ul>
                     </div>
@@ -92,14 +109,23 @@
                         
                         <div class="card-subsection">
                             <h4>Choose Background Color:</h4>
+                            <p class="help-text" style="margin: 8px 0; color: #6b7280; font-size: 13px;">✨ Select from 5 standard colors or use custom color picker!</p>
+                            
+                            <!-- 5 Standard Colors -->
                             <div class="color-palette-grid">
-                                <div class="color-circle" data-color="white" style="background: #ffffff; border: 2px solid #ddd;" title="White"></div>
-                                <div class="color-circle" data-color="black" style="background: #000000;" title="Black"></div>
-                                <div class="color-circle" data-color="light_blue" style="background: #4169e1;" title="Blue"></div>
-                                <div class="color-circle" data-color="red" style="background: #dc3545;" title="Red"></div>
-                                <div class="color-circle" data-color="green" style="background: #28a745;" title="Green"></div>
+                                <div class="color-circle" data-color="white" style="background: #ffffff; border: 2px solid #ddd;" title="White">
+                                </div>
+                                <div class="color-circle" data-color="light_blue" style="background: #ADD8E6;" title="Light Blue">
+                                </div>
+                                <div class="color-circle" data-color="light_gray" style="background: #D3D3D3;" title="Light Gray">
+                                </div>
+                                <div class="color-circle" data-color="red" style="background: #FF6363;" title="Light Red">
+                                </div>
+                                <div class="color-circle" data-color="cream" style="background: #FFFDF0;" title="Cream">
+                                </div>
                             </div>
                             
+                            <!-- Custom Color Picker -->
                             <div class="custom-color-section">
                                 <label>Or Choose Custom Color:</label>
                                 <div class="custom-color-input">
@@ -160,9 +186,9 @@
                         <div class="form-group">
                             <label>Custom Resize (Optional):</label>
                             <div class="resize-inputs">
-                                <input type="number" class="size-input" id="customWidth" placeholder="Width (px)" min="100" max="2000">
+                                <input type="number" class="size-input" id="resize-width" placeholder="Width (px)">
                                 <span>×</span>
-                                <input type="number" class="size-input" id="customHeight" placeholder="Height (px)" min="100" max="2000">
+                                <input type="number" class="size-input" id="resize-height" placeholder="Height (px)">
                             </div>
                         </div>
                         
@@ -206,7 +232,7 @@
                         <div class="form-group">
                             <label>Tilt Correction (degrees):</label>
                             <div class="tilt-control">
-                                <input type="number" class="tilt-input" value="0" min="-45" max="45">
+                                <input type="number" class="tilt-input" value="0" min="-360" max="360">
                                 <button class="tilt-apply-btn" type="button">
                                     <i class="fas fa-check"></i>
                                     Apply
@@ -237,7 +263,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Contrast</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="contrastSlider" min="-50" max="50" value="0" data-property="contrast">
+                                    <input type="range" class="enhancement-slider" id="contrastSlider" min="-50" max="50" value="0" data-slider="contrast">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -245,7 +271,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Brightness</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="brightnessSlider" min="-50" max="50" value="0" data-property="brightness">
+                                    <input type="range" class="enhancement-slider" id="brightnessSlider" min="-50" max="50" value="0" data-slider="brightness">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -253,7 +279,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Sharpness</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="sharpnessSlider" min="0" max="100" value="0" data-property="sharpness">
+                                    <input type="range" class="enhancement-slider" id="sharpnessSlider" min="0" max="100" value="0" data-slider="sharpness">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -261,7 +287,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Saturation</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="saturationSlider" min="-50" max="50" value="0" data-property="saturation">
+                                    <input type="range" class="enhancement-slider" id="saturationSlider" min="-50" max="50" value="0" data-slider="saturation">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -269,7 +295,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Hue</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="hueSlider" min="-180" max="180" value="0" data-property="hue">
+                                    <input type="range" class="enhancement-slider" id="hueSlider" min="-180" max="180" value="0" data-slider="hue">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -277,7 +303,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Noise<br>Reduction</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="noiseSlider" min="0" max="100" value="0" data-property="noise">
+                                    <input type="range" class="enhancement-slider" id="noiseSlider" min="0" max="100" value="0" data-slider="noise">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -285,7 +311,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Blur</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="blurSlider" min="0" max="10" value="0" data-property="blur">
+                                    <input type="range" class="enhancement-slider" id="blurSlider" min="0" max="10" value="0" data-slider="blur">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -293,7 +319,7 @@
                             <div class="slider-item">
                                 <label class="slider-label">Highlight</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="highlightSlider" min="-100" max="100" value="0" data-property="highlight">
+                                    <input type="range" class="enhancement-slider" id="highlightSlider" min="-100" max="100" value="0" data-slider="highlights">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -301,23 +327,23 @@
                             <div class="slider-item">
                                 <label class="slider-label">Shadow</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="shadowSlider" min="-100" max="100" value="0" data-property="shadow">
+                                    <input type="range" class="enhancement-slider" id="shadowSlider" min="-100" max="100" value="0" data-slider="shadows">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
                             
                             <div class="slider-item">
-                                <label class="slider-label">Temperature</label>
+                                <label class="slider-label">Vibrance</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="temperatureSlider" min="-100" max="100" value="0" data-property="temperature">
+                                    <input type="range" class="enhancement-slider" id="vibranceSlider" min="-100" max="100" value="0" data-slider="vibrance">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
                             
                             <div class="slider-item">
-                                <label class="slider-label">Tint</label>
+                                <label class="slider-label">Warmth</label>
                                 <div class="slider-container">
-                                    <input type="range" class="enhancement-slider" id="tintSlider" min="-100" max="100" value="0" data-property="tint">
+                                    <input type="range" class="enhancement-slider" id="warmthSlider" min="-100" max="100" value="0" data-slider="warmth">
                                     <span class="slider-value">0</span>
                                 </div>
                             </div>
@@ -378,12 +404,25 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/preview.js') }}"></script>
-<script src="{{ url_for('static', filename='js/face_align.js') }}"></script>
+<script src="{{ versioned_url_for('static', filename='js/face_align.js') }}"></script>
+<script src="{{ versioned_url_for('static', filename='js/preview.js') }}"></script>
 <script>
-    // Set PixPort settings
-    PixPort.settings.selectedColor = 'white';
-    PixPort.settings.selectedCountry = 'US';
+    // Initialize PixPort settings if not already defined
+    window.PixPort = window.PixPort || {
+        settings: {
+            selectedColor: 'white',
+            selectedCountry: 'US',
+            selectedQuality: 'high'
+        },
+        currentImage: null,
+        processing: false
+    };
+    
+    // Get current filename from URL or image
+    function getCurrentFilename() {
+        const pathArray = window.location.pathname.split('/');
+        return pathArray[pathArray.length - 1];
+    }
     
     // Track processing actions
     async function processImage(action, filename, options = {}) {
@@ -392,7 +431,7 @@
         try {
             if (loadingOverlay) loadingOverlay.style.display = 'flex';
             
-            const response = await fetch(`/process/${action}/${filename}`, {
+            const response = await fetch(`/process/${action}/${filename || getCurrentFilename()}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

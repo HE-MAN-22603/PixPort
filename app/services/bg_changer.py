@@ -153,6 +153,117 @@ def remove_and_change_background(input_path: str, output_path: str, bg_color: tu
         logger.error(f"Error in remove and change background: {str(e)}")
         raise e
 
+def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
+    """
+    Intelligently change background color - works on both original images and transparent background images
+    
+    Args:
+        input_path (str): Path to input image
+        output_path (str): Path to save output
+        bg_color (tuple): RGB color tuple
+    
+    Returns:
+        bool: True if successful
+    """
+    try:
+        # Create output directory
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Open image with PIL
+        image = Image.open(input_path)
+        
+        # Check if image has transparency (alpha channel)
+        has_transparency = image.mode in ('RGBA', 'LA') or 'transparency' in image.info
+        
+        if has_transparency and image.mode == 'RGBA':
+            # Image already has transparent background, just change it
+            logger.info("Image has transparent background, applying new background color")
+            
+            # Create background with specified color
+            background = Image.new('RGBA', image.size, bg_color + (255,))
+            
+            # Composite the images
+            result = Image.alpha_composite(background, image)
+            
+        else:
+            # Image doesn't have transparent background, need to remove it first
+            logger.info("Image has solid background, removing and applying new color")
+            
+            # Convert image to numpy array for OpenCV processing
+            img = cv2.imread(input_path)
+            if img is None:
+                raise ValueError(f"Could not read image: {input_path}")
+            
+            # Convert to HSV for better background detection
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            
+            # Try to detect background automatically
+            # Check corners to estimate background color
+            h, w = img.shape[:2]
+            corner_pixels = [
+                hsv[0, 0],           # top-left
+                hsv[0, w-1],         # top-right
+                hsv[h-1, 0],         # bottom-left
+                hsv[h-1, w-1],       # bottom-right
+            ]
+            
+            # Use the most common corner color as background reference
+            avg_corner = np.mean(corner_pixels, axis=0).astype(np.uint8)
+            
+            # Create more flexible background mask
+            # Expand the range based on the detected background color
+            tolerance = 30
+            lower_bg = np.array([
+                max(0, int(avg_corner[0]) - tolerance),
+                max(0, int(avg_corner[1]) - tolerance//2),
+                max(0, int(avg_corner[2]) - tolerance)
+            ], dtype=np.uint8)
+            upper_bg = np.array([
+                min(179, int(avg_corner[0]) + tolerance),
+                min(255, int(avg_corner[1]) + tolerance//2),
+                min(255, int(avg_corner[2]) + tolerance)
+            ], dtype=np.uint8)
+            
+            # Create mask for background removal
+            mask = cv2.inRange(hsv, lower_bg, upper_bg)
+            
+            # Apply some morphological operations to clean up the mask
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            
+            # Invert mask (we want to keep the foreground)
+            mask_inv = cv2.bitwise_not(mask)
+            
+            # Create new background with specified color
+            bg_bgr = (bg_color[2], bg_color[1], bg_color[0])  # RGB to BGR
+            background = np.full_like(img, bg_bgr, dtype=np.uint8)
+            
+            # Apply masks
+            foreground = cv2.bitwise_and(img, img, mask=mask_inv)
+            background = cv2.bitwise_and(background, background, mask=mask)
+            
+            # Combine foreground and background
+            result_cv = cv2.add(foreground, background)
+            
+            # Convert back to PIL for consistency
+            result_rgb = cv2.cvtColor(result_cv, cv2.COLOR_BGR2RGB)
+            result = Image.fromarray(result_rgb)
+        
+        # Convert to RGB for final output (remove alpha if present)
+        if result.mode != 'RGB':
+            result = result.convert('RGB')
+        
+        # Save result
+        result.save(output_path, 'JPEG', quality=95)
+        
+        logger.info(f"Smart background change completed: {output_path}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in smart background change: {str(e)}")
+        raise e
+
 def apply_gradient_background(input_path: str, output_path: str, color1: tuple, color2: tuple):
     """
     Apply gradient background

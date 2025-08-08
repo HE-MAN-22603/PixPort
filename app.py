@@ -40,4 +40,14 @@ if not os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
+    
+    # Print startup information
+    print(f'\n🚀 Starting PixPort Server on port {port}')
+    print(f'📊 Debug mode: {"ON" if debug else "OFF"}')
+    print(f'🌍 Environment: {"Production" if os.environ.get("RAILWAY_ENVIRONMENT_NAME") else "Development"}')
+    print(f'🔗 Local URL: http://127.0.0.1:{port}')
+    print(f'🔗 Network URL: http://0.0.0.0:{port}')
+    print('\n✅ Server ready to accept connections!')
+    print('='*50)
+    
     app.run(host='0.0.0.0', port=port, debug=debug)

@@ -1,4 +1,8 @@
-# Python
+# ============================================================================
+# PixPort - AI Passport Photo Maker .gitignore
+# ============================================================================
+
+# Python Core
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,12 +26,11 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.pyc
+*.pyo
+*.pyd
 
-# Flask
-instance/
-.webassets-cache
-
-# Environment variables
+# Virtual Environments
 .env
 .venv
 env/
@@ -35,51 +38,283 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+pyvenv.cfg
 
-# IDE
+# Flask Application
+instance/
+.webassets-cache
+*.db
+*.sqlite
+*.sqlite3
+flask_session/
+
+# User Generated Content & Uploads
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+app/static/processed/*
+!app/static/processed/.gitkeep
+app/static/temp/*
+!app/static/temp/.gitkeep
+uploads/
+processed/
+output/
+results/
+
+# AI/ML Models and Cache
+*.onnx
+*.pth
+*.h5
+*.pkl
+*.joblib
+*.model
+*.weights
+models/
+.rembg/
+.u2net/
+~/.u2net/
+~/.rembg/
+cache/
+model_cache/
+.cache/
+
+# Image Files (large/temporary)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+*.heic
+*.heif
+# Keep demo images
+!app/static/images/demo*.jpg
+!app/static/images/demo*.png
+!**/demo*.*
+!**/sample*.*
+!**/example*.*
+
+# Logs and Debug Files
+*.log
+logs/
+debug.log
+error.log
+access.log
+app.log
+flask.log
+*.log.*
+
+# Development and Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.prof
+test-results/
+test_output/
+
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.vim/
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+.rope_project/
+.ropeproject
 
-# OS
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Operating System Files
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
+Icon?
+.DocumentRevisions-V100
+.fseventsd
+.Trash
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# User uploads and processed files
-app/static/uploads/*
-!app/static/uploads/.gitkeep
-app/static/processed/*
-!app/static/processed/.gitkeep
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
-# AI Models
-*.onnx
-*.pth
-*.h5
-
-# Logs
-*.log
-logs/
-
-# Temporary files
+# Temporary Files
 *.tmp
 *.temp
+*.bak
+*.backup
 temp/
 tmp/
+.tmp/
+temp_*
+tmp_*
+*.swp
+*.swo
 
-# Railway
+# Configuration and Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config.ini
+secrets.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Deployment and Cloud
 .railway/
+.vercel/
+.netlify/
+.serverless/
+.aws/
+.gcp/
+.azure/
+Procfile.windows
+runtime.txt.bak
 
-# Testing
-.coverage
-.pytest_cache/
-htmlcov/
+# Docker
+Dockerfile.local
+docker-compose.override.yml
+.dockerignore
 
-# Node modules (if any)
+# Package Managers
 node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# Documentation
+docs/_build/
+.readthedocs.yml
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+db.sqlite3
+local.db
+
+# Redis
+dump.rdb
+
+# Compression and Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+*.tgz
+*.bz2
+*.xz
+
+# Performance and Profiling
+.prof
+*.prof
+profile_*
+
+# Security Scanning
+.bandit
+.safety
+safety-report.*
+
+# Custom PixPort Specific
+# Add any custom files/folders specific to your project
+run_local.py
+debug_*.py
+test_local_*.py
+local_config.py
+personal_notes.md
+TODO.md
+NOTES.txt
+
+# Development Documentation (generated during development)
+COMPREHENSIVE_BUG_ANALYSIS.md
+FINAL_VALIDATION_REPORT.md
+FIXES_IMPLEMENTED.md
+QUICKSTART.md
+RAILWAY_DEPLOYMENT.md
+DEPLOYMENT_CHECKLIST.md
+
+# Development & Testing Files
+test_all_endpoints.py
+test_comprehensive.py
+test_fixed_app.py
+test_image_info_fix.py
+test_startup.py
+simple_test.py
+create_demo_images.py
+activate_venv.bat
+build.sh
+
+# Build artifacts
+build/
+dist/
+*.whl
+
+# Backup files
+*.bak
+*.backup
+*_backup.*
+*_old.*
+backups/

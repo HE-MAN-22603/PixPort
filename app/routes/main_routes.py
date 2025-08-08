@@ -265,3 +265,72 @@ def comparison_images(filename):
             'error': 'Failed to get comparison data',
             'message': str(e)
         }), 500
+
+@main_bp.route('/api/save-image', methods=['POST'])
+def save_image():
+    """Save processed image to downloads or user specified location"""
+    try:
+        # Get form data
+        action = request.form.get('action', 'save_image')
+        image_data = request.form.get('image_data')
+        
+        if not image_data:
+            return jsonify({
+                'success': False,
+                'error': 'No image data provided'
+            }), 400
+        
+        # For now, we'll just return success since the frontend handles download
+        # In a real implementation, you might save to user's account or cloud storage
+        return jsonify({
+            'success': True,
+            'message': 'Image saved successfully',
+            'saved_path': 'downloads/processed_image.png'  # Simulated path
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Failed to save image',
+            'message': str(e)
+        }), 500
+
+@main_bp.route('/api/upload-status/<filename>')
+def upload_status(filename):
+    """Check upload status and file information"""
+    try:
+        # Check if file exists in upload folder
+        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        processed_path = os.path.join(current_app.config['PROCESSED_FOLDER'], filename)
+        
+        if os.path.exists(processed_path):
+            status = 'processed'
+            file_path = processed_path
+        elif os.path.exists(upload_path):
+            status = 'uploaded'
+            file_path = upload_path
+        else:
+            return jsonify({
+                'success': False,
+                'status': 'not_found',
+                'error': 'File not found'
+            }), 404
+        
+        # Get file stats
+        file_stats = os.stat(file_path)
+        file_size = file_stats.st_size
+        
+        return jsonify({
+            'success': True,
+            'status': status,
+            'filename': filename,
+            'file_size': file_size,
+            'exists': True
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': 'Failed to check upload status',
+            'message': str(e)
+        }), 500

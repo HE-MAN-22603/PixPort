@@ -330,3 +330,84 @@ def detect_face_and_resize(input_path: str, output_path: str, dimensions: tuple)
         logger.error(f"Error in face detection resize: {str(e)}")
         # Fallback to standard resize
         return resize_to_passport(input_path, output_path, dimensions)
+
+def custom_resize(input_path: str, output_path: str, width: int, height: int, maintain_aspect: bool = True):
+    """
+    Resize image to custom dimensions
+    
+    Args:
+        input_path (str): Path to input image
+        output_path (str): Path to save resized image  
+        width (int): Target width in pixels
+        height (int): Target height in pixels
+        maintain_aspect (bool): Whether to maintain aspect ratio
+    
+    Returns:
+        bool: True if successful
+    """
+    try:
+        # Validate input
+        if not os.path.exists(input_path):
+            raise FileNotFoundError(f"Input file not found: {input_path}")
+        
+        # Create output directory
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Open image
+        image = Image.open(input_path)
+        
+        # Convert to RGB if necessary
+        if image.mode not in ('RGB', 'RGBA'):
+            image = image.convert('RGB')
+        
+        original_width, original_height = image.size
+        target_width, target_height = width, height
+        
+        if maintain_aspect:
+            # Calculate aspect ratios
+            target_ratio = target_width / target_height
+            original_ratio = original_width / original_height
+            
+            # Determine the best fit strategy
+            if original_ratio > target_ratio:
+                # Image is wider than target - fit by height
+                new_height = target_height
+                new_width = int(target_height * original_ratio)
+            else:
+                # Image is taller than target - fit by width
+                new_width = target_width
+                new_height = int(target_width / original_ratio)
+            
+            # Resize image maintaining aspect ratio
+            resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+            
+            # Create canvas with white background
+            final_image = Image.new('RGB', (target_width, target_height), 'white')
+            
+            # Calculate position to center the resized image
+            x_offset = (target_width - new_width) // 2
+            y_offset = (target_height - new_height) // 2
+            
+            # Paste resized image onto canvas
+            if resized_image.mode == 'RGBA':
+                final_image.paste(resized_image, (x_offset, y_offset), resized_image)
+            else:
+                final_image.paste(resized_image, (x_offset, y_offset))
+        else:
+            # Direct resize without maintaining aspect ratio
+            final_image = image.resize((target_width, target_height), Image.LANCZOS)
+            if final_image.mode == 'RGBA':
+                # Convert RGBA to RGB with white background
+                rgb_image = Image.new('RGB', final_image.size, 'white')
+                rgb_image.paste(final_image, mask=final_image.split()[-1])
+                final_image = rgb_image
+        
+        # Save result with high quality
+        final_image.save(output_path, 'JPEG', quality=95, dpi=(300, 300))
+        
+        logger.info(f"Image resized to custom dimensions {width}x{height}: {output_path}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in custom resize: {str(e)}")
+        raise e

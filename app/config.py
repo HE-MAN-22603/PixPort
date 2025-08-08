@@ -11,8 +11,40 @@ load_dotenv()
 class Config:
     """Flask configuration class"""
     
-    # Basic Flask config
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'pixport-secret-key-railway-2024'
+    # Basic Flask config - require SECRET_KEY in production
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    
+    def __init__(self):
+        # Validate critical configuration
+        self._validate_config()
+    
+    def _validate_config(self):
+        """Validate critical configuration settings"""
+        # Require SECRET_KEY in production environments
+        if not self.SECRET_KEY:
+            if os.environ.get('RAILWAY_ENVIRONMENT_NAME') or os.environ.get('FLASK_ENV') == 'production':
+                raise ValueError(
+                    "SECRET_KEY environment variable is required in production. "
+                    "Please set SECRET_KEY to a secure random string."
+                )
+            else:
+                # Only use fallback in development
+                self.SECRET_KEY = 'dev-secret-key-change-in-production-' + str(hash(os.getcwd()))
+                import warnings
+                warnings.warn(
+                    "Using default SECRET_KEY in development. Set SECRET_KEY environment variable for production.",
+                    UserWarning
+                )
+        
+        # Validate SECRET_KEY strength
+        if len(self.SECRET_KEY) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters long")
+        
+        # Warn about weak keys
+        weak_keys = ['dev-secret-key', 'change-me', 'secret', 'key', 'password']
+        if any(weak in self.SECRET_KEY.lower() for weak in weak_keys):
+            if os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
+                raise ValueError("SECRET_KEY appears to be a weak/default key. Please use a strong random key.")
     
     # File upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
@@ -62,14 +94,11 @@ class Config:
         'Japan': (413, 531),     # Keep for compatibility
     }
     
-    # Background colors (RGB)
+    # Background colors (RGB) - 5 Standard Colors
     BACKGROUND_COLORS = {
-        'white': (255, 255, 255),
-        'blue': (70, 130, 180),
-        'red': (220, 20, 60),
-        'grey': (128, 128, 128),
-        'light_blue': (230, 243, 255),  # Very light blue for passports
-        'light_gray': (245, 245, 245),  # Very light gray
-        'light_grey': (211, 211, 211),  # Keep for backward compatibility
-        'cream': (249, 246, 240)        # Cream color
+        'white': (255, 255, 255),        # Classic white
+        'light_blue': (173, 216, 230),   # Light blue for official photos
+        'light_gray': (211, 211, 211),   # Light gray
+        'red': (255, 99, 99),            # Light red
+        'cream': (255, 253, 240)         # Cream/ivory
     }
