@@ -46,11 +46,30 @@ def setup_middleware(app):
             duration = time.time() - request.start_time
             response.headers.add('X-Response-Time', f"{duration:.3f}s")
         
-        # Add cache control for static files
-        if request.endpoint == 'static':
-            response.headers['Cache-Control'] = 'public, max-age=3600'  # 1 hour
+        # Comprehensive cache control with aggressive cache busting
+        if request.endpoint == 'static' or '/static/' in request.path:
+            # Static files (CSS, JS) - aggressive cache busting
+            if any(ext in request.path for ext in ['.css', '.js']):
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+                response.headers['ETag'] = f'"pixport-{int(time.time())}-{hash(str(request.path))}"'
+            # Images and other assets - short cache with validation
+            elif any(ext in request.path for ext in ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2']):
+                response.headers['Cache-Control'] = 'public, max-age=300, must-revalidate'  # 5 minutes
+                response.headers['ETag'] = f'"pixport-asset-{int(time.time())}"'
+            else:
+                response.headers['Cache-Control'] = 'no-cache, must-revalidate'
+                response.headers['ETag'] = f'"pixport-{int(time.time())}"'
         elif request.endpoint and ('serve_' in request.endpoint):
-            response.headers['Cache-Control'] = 'public, max-age=7200'  # 2 hours for processed files
+            # Processed images - short cache
+            response.headers['Cache-Control'] = 'private, max-age=300, must-revalidate'  # 5 minutes
+        else:
+            # HTML pages and API responses - no caching whatsoever
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            response.headers['Last-Modified'] = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
         
         return response
     
@@ -73,7 +92,12 @@ def setup_middleware(app):
     @app.errorhandler(500)
     def internal_error(error):
         """Handle internal server error"""
+        import traceback
+        # Log the actual error
+        app.logger.error(f"500 error: {str(error)}")
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
+        
         return jsonify({
-            'error': 'Internal server error',
-            'message': 'Something went wrong processing your request'
+            'error': 'Download failed',
+            'message': 'An error occurred while preparing your download. Please try again.'
         }), 500

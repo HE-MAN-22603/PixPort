@@ -87,6 +87,7 @@ model_cache/
 *.webp
 *.heic
 *.heif
+*.pdf
 # Keep demo images
 !app/static/images/demo*.jpg
 !app/static/images/demo*.png
@@ -288,24 +289,26 @@ personal_notes.md
 TODO.md
 NOTES.txt
 
-# Development Documentation (generated during development)
-COMPREHENSIVE_BUG_ANALYSIS.md
-FINAL_VALIDATION_REPORT.md
-FIXES_IMPLEMENTED.md
-QUICKSTART.md
-RAILWAY_DEPLOYMENT.md
-DEPLOYMENT_CHECKLIST.md
+# Documentation Directory
+# Keep docs directory and all documentation files
+!docs/
+!docs/*.md
 
-# Development & Testing Files
-test_all_endpoints.py
-test_comprehensive.py
-test_fixed_app.py
-test_image_info_fix.py
-test_startup.py
-simple_test.py
-create_demo_images.py
-activate_venv.bat
-build.sh
+# Tests Directory Content (exclude test outputs but keep structure)
+tests/__pycache__/
+tests/*.pyc
+tests/sample_*
+tests/test_output/
+tests/temp_*
+tests/*.log
+tests/results/
+# Keep tests directory structure and source files
+!tests/
+!tests/__init__.py
+!tests/README.md
+!tests/*.py
+!tests/*.bat
+!tests/*.sh
 
 # Build artifacts
 build/

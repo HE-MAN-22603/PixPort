@@ -33,8 +33,8 @@ def ensure_models():
         print('Models will be downloaded when first needed')
         return False
 
-# Only try to ensure models if not in Railway startup
-if not os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
+# Only try to ensure models if not in Railway startup or development mode
+if not os.environ.get('RAILWAY_ENVIRONMENT_NAME') and not os.environ.get('SKIP_AI_MODELS'):
     ensure_models()
 
 if __name__ == '__main__':

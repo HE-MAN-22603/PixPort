@@ -1,0 +1,1964 @@
+/* ========================================
+   PixPort Modern Result Page Styles
+   Modern, Clean, Contemporary Design
+   ======================================== */
+
+/* ========================================
+   CSS CUSTOM PROPERTIES (Design System)
+   ======================================== */
+:root {
+    /* Color Palette - Modern UI Colors */
+    --color-primary: #2563eb;
+    --color-primary-light: #3b82f6;
+    --color-primary-dark: #1d4ed8;
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-500: #3b82f6;
+    
+    --color-success: #10b981;
+    --color-success-light: #34d399;
+    --color-success-50: #ecfdf5;
+    --color-success-100: #d1fae5;
+    
+    --color-warning: #f59e0b;
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    
+    --color-danger: #ef4444;
+    --color-danger-50: #fef2f2;
+    --color-danger-100: #fee2e2;
+    
+    /* Neutral Colors */
+    --color-white: #ffffff;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    
+    /* Typography Scale */
+    --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-family-display: 'Inter', system-ui, sans-serif;
+    --font-family-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 1.875rem;  /* 30px */
+    --font-size-4xl: 2.25rem;   /* 36px */
+    
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.625;
+    
+    /* Spacing Scale - Based on 4px system */
+    --space-0: 0;
+    --space-1: 0.25rem;   /* 4px */
+    --space-2: 0.5rem;    /* 8px */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-8: 2rem;      /* 32px */
+    --space-10: 2.5rem;   /* 40px */
+    --space-12: 3rem;     /* 48px */
+    --space-16: 4rem;     /* 64px */
+    --space-20: 5rem;     /* 80px */
+    --space-24: 6rem;     /* 96px */
+    
+    /* Border Radius */
+    --radius-none: 0;
+    --radius-sm: 0.125rem;   /* 2px */
+    --radius-base: 0.25rem;  /* 4px */
+    --radius-md: 0.375rem;   /* 6px */
+    --radius-lg: 0.5rem;     /* 8px */
+    --radius-xl: 0.75rem;    /* 12px */
+    --radius-2xl: 1rem;      /* 16px */
+    --radius-3xl: 1.5rem;    /* 24px */
+    --radius-full: 50rem;
+    
+    /* Shadows - Modern depth system */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+    --transition-slow: 350ms ease;
+    --transition-bounce: 250ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* Z-Index Scale */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+}
+h2 {
+    font-size: 1.8rem !important;
+    text-align: center !important;
+    color: #ffffff !important;
+}
+
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-white: #1f2937;
+        --color-gray-50: #111827;
+        --color-gray-100: #1f2937;
+        --color-gray-200: #374151;
+        --color-gray-300: #4b5563;
+        --color-gray-400: #6b7280;
+        --color-gray-500: #9ca3af;
+        --color-gray-600: #d1d5db;
+        --color-gray-700: #e5e7eb;
+        --color-gray-800: #f3f4f6;
+        --color-gray-900: #f9fafb;
+    }
+}
+
+/* ========================================
+   MODERN RESET & BASE STYLES
+   ======================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Remove default margins and ensure full coverage */
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-white) 50%, var(--color-primary-50) 100%);
+}
+
+html {
+    margin: 0;
+    padding: 0;
+}
+
+/* Override main layout navbar gap for result page */
+.result-page .main-content {
+    padding-top: 0 !important;
+}
+
+/* Ensure navbar doesn't interfere with result page flow */
+.result-page .navbar {
+    position: relative !important;
+    margin-bottom: 0 !important;
+}
+
+/* ========================================
+   RESULT PAGE LAYOUT
+   ======================================== */
+
+/* Main Result Page Container */
+.result-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-white) 50%, var(--color-primary-50) 100%);
+    font-family: var(--font-family-base);
+    color: var(--color-gray-900);
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+/* Container Override - Edge to Edge Layout */
+.result-page .container,
+body .result-page .container,
+html .result-page .container {
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* ========================================
+   SUCCESS HEADER - Modern Hero Section
+   ======================================== */
+.success-header {
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-light) 100%);
+    color: var(--color-white);
+    padding: var(--space-8) var(--space-3);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
+    margin: 0;
+    width: 100%;
+    margin-top: -1px; /* Eliminate any potential 1px gap */
+}
+
+.success-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.success-content {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-6);
+    font-size: var(--font-size-3xl);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: successPulse 2s ease-in-out infinite;
+}
+
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+    }
+}
+
+.success-text h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--space-4);
+    font-family: var(--font-family-display);
+    letter-spacing: -0.025em;
+}
+
+.success-text p {
+    font-size: var(--font-size-lg);
+    opacity: 0.95;
+    margin: 0;
+    font-weight: var(--font-weight-normal);
+}
+
+/* ========================================
+   MAIN CONTENT GRID - Modern Layout
+   ======================================== */
+.result-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--space-8);
+    padding: var(--space-16) var(--space-6);
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: flex-start;
+    background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-white) 50%, var(--color-primary-50) 100%);
+}
+
+/* ========================================
+   IMAGE SECTION - Modern Card Design
+   ======================================== */
+.image-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    align-self: flex-start;
+}
+
+.image-bottom-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.image-result {
+    background: var(--color-white);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-gray-100);
+    position: relative;
+    overflow: hidden;
+}
+
+.image-result::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light), var(--color-success));
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+}
+
+.result-image-container {
+    position: relative;
+    text-align: center;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    background: var(--color-gray-50);
+    padding: var(--space-4);
+    border: 2px dashed var(--color-gray-200);
+    transition: all var(--transition-base);
+    padding-top: 90px;
+}
+
+.result-image-container:hover {
+    border-color: var(--color-primary-light);
+    background: var(--color-primary-50);
+    transform: translateY(-2px);
+}
+
+.result-image {
+    max-width: 100%;
+    height: auto;
+    max-height: 600px;
+    border-radius: var(--radius-xl);
+    object-fit: contain;
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-base);
+}
+
+.result-image:hover {
+    box-shadow: var(--shadow-2xl);
+    transform: scale(1.02);
+}
+
+/* ========================================
+   IMAGE CONTROLS - Floating Modern UI
+   ======================================== */
+.image-controls {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    display: flex;
+    gap: var(--space-2);
+    z-index: 10;
+}
+
+.zoom-controls,
+.view-controls {
+    display: flex;
+    gap: var(--space-1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2);
+    border: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-lg);
+}
+
+.control-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--color-gray-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-base);
+}
+
+.control-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.control-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.control-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ========================================
+   COMPARISON VIEW - Modern Toggle
+   ======================================== */
+.comparison-container {
+    margin-top: var(--space-8);
+    background: var(--color-white);
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-gray-100);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all var(--transition-base);
+    pointer-events: none;
+}
+
+.comparison-container.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.comparison-view {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--space-6);
+    padding: var(--space-8);
+    align-items: center;
+}
+
+.comparison-item {
+    text-align: center;
+}
+
+.comparison-item h4 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-600);
+    margin-bottom: var(--space-4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.comparison-original,
+.comparison-processed {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-gray-200);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+}
+
+.comparison-original:hover,
+.comparison-processed:hover {
+    border-color: var(--color-primary);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-xl);
+}
+
+.comparison-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.divider-line {
+    width: 2px;
+    height: 40px;
+    background: var(--color-gray-300);
+    border-radius: var(--radius-full);
+}
+
+.divider-handle {
+    width: 36px;
+    height: 36px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-white);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-md);
+}
+
+.divider-handle:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   IMAGE STATS PANEL - Modern Info Cards
+   ======================================== */
+.image-stats-panel {
+    background: var(--color-white);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-gray-100);
+}
+
+.image-stats-panel h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-6);
+    text-align: center;
+    font-family: var(--font-family-display);
+}
+
+.image-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.stat-item {
+    text-align: center;
+    padding: var(--space-4);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-gray-100);
+    transition: all var(--transition-fast);
+}
+
+.stat-item:hover {
+    background: var(--color-primary-50);
+    border-color: var(--color-primary-200);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-1);
+}
+
+.stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+}
+
+/* Loading State */
+.loading-stats {
+    text-align: center;
+    color: var(--color-gray-500);
+    padding: var(--space-8);
+}
+
+.loading-stats i {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--space-2);
+    color: var(--color-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   NEXT STEPS PANEL - Modern Action Cards
+   ======================================== */
+.next-steps-panel {
+    background: var(--color-white);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-gray-100);
+}
+
+.next-steps-panel h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-6);
+    text-align: center;
+    font-family: var(--font-family-display);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-xl);
+    text-decoration: none;
+    color: var(--color-gray-700);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-50);
+    transform: translateY(-3px) translateX(4px);
+    box-shadow: var(--shadow-xl);
+    text-decoration: none;
+}
+
+.action-btn:active {
+    transform: translateY(-1px) translateX(2px);
+}
+
+.action-btn i {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary);
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+}
+
+.action-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
+}
+
+.action-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-1);
+}
+
+.action-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin: 0;
+}
+
+/* ========================================
+   DOWNLOAD PANEL - Modern Sidebar
+   ======================================== */
+.actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+.download-panel {
+    background: var(--color-white);
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--color-gray-100);
+    overflow: hidden;
+    /* position: sticky; */
+    top: var(--space-6);
+    max-height: calc(100vh - 3rem);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 5;
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+/* Download Header */
+.download-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+    padding: var(--space-6);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.download-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+}
+
+.download-header h2 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+/* Download Options */
+.download-options,
+.quick-downloads {
+    padding: var(--space-6);
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.download-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+    box-shadow: var(--shadow-md);
+}
+
+.download-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.download-btn:hover::before {
+    left: 100%;
+}
+
+.download-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+}
+
+.download-btn:active {
+    transform: translateY(-1px);
+}
+
+.download-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.download-btn i {
+    font-size: var(--font-size-lg);
+}
+
+.download-btn-secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    font-size: var(--font-size-sm);
+    padding: var(--space-3) var(--space-4);
+    margin: var(--space-2) 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.download-btn-secondary:hover {
+    background: var(--color-gray-200);
+    color: var(--color-gray-900);
+    box-shadow: var(--shadow-md);
+}
+
+.download-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+/* Advanced Options */
+.advanced-options {
+    background: var(--color-gray-50);
+    border-top: 1px solid var(--color-gray-200);
+    padding: var(--space-6);
+}
+
+.advanced-options h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-4);
+    text-align: center;
+}
+
+.option-row {
+    margin-bottom: var(--space-4);
+}
+
+.option-row:last-child {
+    margin-bottom: 0;
+}
+
+.option-row label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+    margin-bottom: var(--space-2);
+}
+
+.option-row select {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    color: var(--color-gray-700);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.option-row select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Quality Control */
+.quality-control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.quality-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    background: var(--color-gray-200);
+    border-radius: var(--radius-full);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.quality-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-fast);
+}
+
+.quality-control input[type="range"]::-webkit-slider-thumb:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+}
+
+.quality-display {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+    min-width: 40px;
+    text-align: center;
+}
+
+.help-text {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    margin-top: var(--space-1);
+    font-style: italic;
+}
+
+/* ========================================
+   PRINT LAYOUT PANEL - Modern Gradient
+   ======================================== */
+.print-layout-panel {
+    background: var(--color-white);
+    color: var(--color-gray-900);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-gray-100);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-base);
+}
+
+.print-layout-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light), var(--color-success));
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+}
+
+.print-layout-panel:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2xl);
+}
+
+.print-layout-panel h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-6);
+    text-align: center;
+    font-family: var(--font-family-display);
+    position: relative;
+    z-index: 1;
+}
+
+.panel-description {
+    font-size: var(--font-size-base);
+    color: var(--color-gray-600);
+    text-align: center;
+    margin-bottom: var(--space-6);
+    line-height: var(--line-height-relaxed);
+    position: relative;
+    z-index: 1;
+}
+
+/* Print Features Grid - Landscape Optimized */
+.print-layout-features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    position: relative;
+    z-index: 1;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+}
+
+.feature-item i {
+    font-size: var(--font-size-base);
+    width: 16px;
+    text-align: center;
+}
+
+/* Print Form Elements - Landscape Optimized */
+.print-generator-form {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    align-items: start;
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.form-select {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    color: var(--color-gray-700);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-select option {
+    background: var(--color-white);
+    color: var(--color-gray-700);
+}
+
+/* Checkbox Styling - Full width span */
+.checkbox-group {
+    margin: var(--space-4) 0;
+    grid-column: 1 / -1;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+    padding: var(--space-2) 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    background: var(--color-white);
+    border: 2px solid var(--color-gray-300);
+    border-radius: var(--radius-base);
+    margin-right: var(--space-3);
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--color-primary-50);
+    border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: "✓";
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Print Action Buttons - Spans full width in landscape */
+.print-action-buttons {
+    display: flex;
+    gap: var(--space-3);
+    margin: var(--space-6) 0;
+    grid-column: 1 / -1;
+}
+
+.print-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-5);
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.print-btn-primary {
+    background: var(--color-primary);
+    color: var(--color-white);
+    border: 2px solid var(--color-primary);
+}
+
+.print-btn-primary:hover {
+    background: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.print-btn-secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    border: 2px solid var(--color-gray-300);
+}
+
+.print-btn-secondary:hover {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+    box-shadow: var(--shadow-md);
+}
+
+.print-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Print Sheet Download Dropdown */
+.print-download-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.print-download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    background: var(--color-success);
+    color: var(--color-white);
+    border: 2px solid var(--color-success);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
+    position: relative;
+}
+
+.print-download-btn:hover {
+    background: var(--color-success-light);
+    border-color: var(--color-success-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.print-download-btn .dropdown-arrow {
+    margin-left: var(--space-1);
+    font-size: 0.8em;
+    transition: transform var(--transition-fast);
+}
+
+.print-download-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.print-download-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-fast);
+    margin-top: var(--space-1);
+    min-width: 180px;
+}
+
+.print-download-dropdown.open .print-download-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.print-download-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-gray-700);
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+    border-radius: 0;
+}
+
+.print-download-item:first-child {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.print-download-item:last-child {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.print-download-item:only-child {
+    border-radius: var(--radius-lg);
+}
+
+.print-download-item:hover {
+    background: var(--color-gray-50);
+    color: var(--color-gray-900);
+    transform: none;
+}
+
+.print-download-item i {
+    font-size: var(--font-size-base);
+    width: 20px;
+    text-align: center;
+    color: var(--color-primary);
+}
+
+.print-download-item .format-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.print-download-item .format-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+}
+
+.print-download-item .format-desc {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    margin-top: 1px;
+}
+
+.print-download-item:hover .format-desc {
+    color: var(--color-gray-600);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - Mobile First
+   ======================================== */
+
+/* Large Tablets and Small Desktops */
+@media (max-width: 1200px) {
+    .result-content {
+        grid-template-columns: 1fr 350px;
+        gap: var(--space-6);
+        padding: var(--space-12) var(--space-4);
+    }
+}
+
+/* Standard Tablets */
+@media (max-width: 1024px) {
+    .result-content {
+        grid-template-columns: 1fr;
+        gap: var(--space-8);
+        padding: var(--space-10) var(--space-4);
+    }
+    
+    .actions-section {
+        order: -1;
+    }
+    
+    .download-panel {
+        position: static;
+        max-height: none;
+    }
+    
+    .success-header {
+        padding: var(--space-12) var(--space-4);
+    }
+    
+    .success-text h1 {
+        font-size: var(--font-size-3xl);
+    }
+}
+
+/* Small Tablets */
+@media (max-width: 768px) {
+    .success-header {
+        padding: var(--space-10) var(--space-4);
+    }
+    
+    .success-icon {
+        width: 64px;
+        height: 64px;
+        font-size: var(--font-size-2xl);
+    }
+    
+    .success-text h1 {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .result-content {
+        padding: var(--space-8) var(--space-3);
+    }
+    
+    .comparison-view {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+        text-align: center;
+    }
+    
+    .comparison-divider {
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .divider-line {
+        width: 40px;
+        height: 2px;
+    }
+    
+    .image-controls {
+        position: static;
+        justify-content: center;
+        margin-top: var(--space-4);
+    }
+    
+    .download-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        gap: var(--space-3);
+    }
+    
+    .action-btn {
+        padding: var(--space-3) var(--space-4);
+    }
+}
+
+/* Mobile Phones */
+@media (max-width: 480px) {
+    .success-header {
+        padding: var(--space-8) var(--space-3);
+    }
+    
+    .success-icon {
+        width: 56px;
+        height: 56px;
+        font-size: var(--font-size-xl);
+    }
+    
+    .success-text h1 {
+        font-size: var(--font-size-xl);
+    }
+    
+    .success-text p {
+        font-size: var(--font-size-base);
+    }
+    
+    .result-content {
+        padding: var(--space-6) var(--space-2);
+        gap: var(--space-6);
+    }
+    
+    .image-result,
+    .image-stats-panel,
+    .next-steps-panel,
+    .download-panel,
+    .print-layout-panel {
+        padding: var(--space-4);
+        border-radius: var(--radius-2xl);
+    }
+    
+    .image-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
+    }
+    
+    .stat-item {
+        padding: var(--space-3);
+    }
+    
+    .print-action-buttons {
+        flex-direction: column;
+    }
+    
+    .print-layout-features {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+    
+    .print-generator-form {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+    
+    .comparison-view {
+        padding: var(--space-4);
+    }
+    
+    .comparison-original,
+    .comparison-processed {
+        max-width: 150px;
+    }
+}
+
+/* ========================================
+   ANIMATIONS AND MICRO-INTERACTIONS
+   ======================================== */
+
+/* Stagger animation for stats */
+.image-stats .stat-item {
+    animation: slideInUp var(--transition-base) ease-out;
+    animation-fill-mode: both;
+}
+
+.image-stats .stat-item:nth-child(1) { animation-delay: 0.1s; }
+.image-stats .stat-item:nth-child(2) { animation-delay: 0.2s; }
+.image-stats .stat-item:nth-child(3) { animation-delay: 0.3s; }
+.image-stats .stat-item:nth-child(4) { animation-delay: 0.4s; }
+.image-stats .stat-item:nth-child(5) { animation-delay: 0.5s; }
+.image-stats .stat-item:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Action buttons stagger */
+.action-buttons .action-btn {
+    animation: slideInLeft var(--transition-base) ease-out;
+    animation-fill-mode: both;
+}
+
+.action-buttons .action-btn:nth-child(1) { animation-delay: 0.1s; }
+.action-buttons .action-btn:nth-child(2) { animation-delay: 0.2s; }
+.action-buttons .action-btn:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Page load animation */
+.result-page {
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .result-image,
+    .comparison-original,
+    .comparison-processed {
+        border: 3px solid var(--color-gray-900);
+    }
+    
+    .control-btn,
+    .download-btn,
+    .action-btn {
+        border: 2px solid var(--color-gray-900);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .success-icon {
+        animation: none;
+    }
+}
+
+/* Focus styles for accessibility */
+.control-btn:focus,
+.download-btn:focus,
+.action-btn:focus,
+.print-btn:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+    .download-panel,
+    .image-controls,
+    .action-buttons,
+    .print-layout-panel {
+        display: none !important;
+    }
+    
+    .result-page {
+        background: white !important;
+    }
+    
+    .result-content {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+    
+    .image-result,
+    .image-stats-panel {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+}
+
+/* ========================================
+   SUCCESS TOAST - Modern Notification
+   ======================================== */
+.success-toast {
+    position: fixed;
+    top: var(--space-6);
+    right: var(--space-6);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-light));
+    color: var(--color-white);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+    transform: translateX(100%);
+    transition: transform var(--transition-base);
+    z-index: var(--z-toast);
+    min-width: 300px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.success-toast.show {
+    transform: translateX(0);
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.toast-content i {
+    font-size: var(--font-size-lg);
+    opacity: 0.9;
+}
+
+.toast-message {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+}
+
+/* ========================================
+   DOWNLOAD PROGRESS & STATUS
+   ======================================== */
+.download-progress {
+    display: none;
+    margin: var(--space-4) 0;
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.progress-container {
+    width: 100%;
+    height: 8px;
+    background: var(--color-gray-200);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--radius-full);
+    width: 0%;
+    transition: width var(--transition-base);
+    position: relative;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin-top: var(--space-2);
+    text-align: center;
+    font-weight: var(--font-weight-medium);
+}
+
+.download-stats {
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.download-stats .stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.download-stats .stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}
+
+.download-stats .stat-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+}
+
+/* ========================================
+   PRINT LAYOUT SPECIFIC STYLES
+   ======================================== */
+.print-preview-info {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    margin: var(--space-4) 0;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.print-preview-info h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-3);
+    color: var(--color-white);
+}
+
+.print-preview-info p {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+}
+
+.print-preview-info p:last-child {
+    margin-bottom: 0;
+}
+
+.print-status-message {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    margin: var(--space-4) 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    display: none;
+}
+
+.print-status-message.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--color-white);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.print-status-message.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--color-white);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.print-progress-container {
+    position: relative;
+    z-index: 1;
+    margin: var(--space-4) 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8));
+    border-radius: var(--radius-full);
+    width: 0%;
+    transition: width var(--transition-base);
+    position: relative;
+    animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+.print-result-section {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    margin: var(--space-6) 0;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.print-result-header h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-4);
+    color: var(--color-white);
+    text-align: center;
+}
+
+.print-result-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.print-btn-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--color-white);
+    border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+.print-btn-success:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+}
+
+.print-result-preview {
+    text-align: center;
+}
+
+.print-result-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-lg);
+}
+
+.print-layout-info {
+    text-align: center;
+    margin-top: var(--space-4);
+    position: relative;
+    z-index: 1;
+}
+
+.print-layout-info small {
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+    font-style: italic;
+}
+
+/* ========================================
+   PROCESSING INFO SECTION
+   ======================================== */
+.processing-info {
+    background: var(--color-gray-50);
+    border-top: 1px solid var(--color-gray-200);
+    padding: var(--space-8) 0;
+    margin-top: var(--space-8);
+}
+
+.processing-info h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--space-6);
+    text-align: center;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+}
+
+.info-item {
+    background: var(--color-white);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-gray-100);
+    text-align: center;
+}
+
+.info-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-600);
+    margin-bottom: var(--space-2);
+}
+
+.info-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+}
+
+/* Print Only Styles */
+.print-only {
+    display: none;
+}
+
+.print-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.print-header h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-2);
+}
+
+.print-image {
+    text-align: center;
+    margin: var(--space-8) 0;
+}
+
+.print-image img {
+    max-width: 400px;
+    height: auto;
+    border: 1px solid var(--color-gray-300);
+}
+
+.print-info {
+    text-align: center;
+    margin-top: var(--space-8);
+    font-size: var(--font-size-sm);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.hidden { display: none !important; }
+.block { display: block !important; }
+.flex { display: flex !important; }
+.grid { display: grid !important; }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.text-primary { color: var(--color-primary); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+
+.bg-white { background-color: var(--color-white); }
+.bg-gray-50 { background-color: var(--color-gray-50); }
+.bg-primary { background-color: var(--color-primary); }
+
+.rounded-none { border-radius: var(--radius-none); }
+.rounded { border-radius: var(--radius-base); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow { box-shadow: var(--shadow-base); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+
+/* ========================================
+   END OF MODERN RESULT PAGE STYLES
+   ======================================== */

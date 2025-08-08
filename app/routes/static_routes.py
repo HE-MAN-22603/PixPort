@@ -48,7 +48,7 @@ def get_cache_headers():
         'ETag': str(hash(request.path))
     }
 
-@static_bp.route('/uploads/<filename>')
+@static_bp.route('uploads/<filename>')
 def serve_upload(filename):
     """Securely serve uploaded files with validation and caching"""
     try:
@@ -68,7 +68,7 @@ def serve_upload(filename):
         
         # Check if file exists and is a file (not directory)
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
-            logger.info(f"File not found: {filename}")
+            logger.warning(f"Upload file not found: {filename} at path: {file_path}")
             abort(404)
         
         # Check file size (prevent serving huge files)
@@ -79,9 +79,12 @@ def serve_upload(filename):
             abort(413)  # Payload Too Large
         
         # Add security headers and serve file
+        # Check if this is a download request (has download parameter)
+        is_download = request.args.get('download', 'false').lower() == 'true'
+        
         response = send_file(
             file_path,
-            as_attachment=False,
+            as_attachment=is_download,
             conditional=True  # Enable conditional requests for better caching
         )
         
@@ -99,7 +102,7 @@ def serve_upload(filename):
         logger.error(f"Error serving upload file {filename}: {str(e)}")
         abort(500)
 
-@static_bp.route('/processed/<filename>')
+@static_bp.route('processed/<filename>')
 def serve_processed(filename):
     """Securely serve processed files with validation and caching"""
     try:
@@ -119,7 +122,22 @@ def serve_processed(filename):
         
         # Check if file exists and is a file
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
-            logger.info(f"Processed file not found: {filename}")
+            logger.warning(f"Processed file not found: {filename} at path: {file_path}")
+            # Try to find a similar file with different processing suffix
+            try:
+                processed_files = os.listdir(processed_folder)
+                base_name = filename.split('.')[0].split('_')[0]  # Get base UUID
+                similar_files = [f for f in processed_files if f.startswith(base_name) and f != filename]
+                if similar_files:
+                    logger.info(f"Found similar files for {filename}: {similar_files}")
+                    # Use the most recent similar file
+                    newest_file = max(similar_files, key=lambda x: os.path.getmtime(
+                        os.path.join(processed_folder, x)))
+                    logger.info(f"Redirecting to similar file: {newest_file}")
+                    from flask import redirect, url_for
+                    return redirect(url_for('static_files.serve_processed', filename=newest_file))
+            except Exception as e:
+                logger.error(f"Error looking for similar files: {str(e)}")
             abort(404)
         
         # Check file size
@@ -130,9 +148,12 @@ def serve_processed(filename):
             abort(413)
         
         # Add security headers and serve file
+        # Check if this is a download request (has download parameter)
+        is_download = request.args.get('download', 'false').lower() == 'true'
+        
         response = send_file(
             file_path,
-            as_attachment=False,
+            as_attachment=is_download,
             conditional=True
         )
         

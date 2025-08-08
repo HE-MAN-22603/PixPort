@@ -18,6 +18,17 @@ def create_app():
     config = Config()
     app.config.from_object(config)
     
+    # Add version for cache busting
+    import time
+    app.config['VERSION'] = str(int(time.time()))  # Use timestamp as version
+    
+    # Development mode configurations
+    if os.environ.get('DEVELOPMENT_MODE') == '1':
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+        app.config['TEMPLATES_AUTO_RELOAD'] = True
+        app.jinja_env.auto_reload = True
+        app.jinja_env.cache = {}
+    
     # Initialize rate limiter with user-friendly limits
     limiter = Limiter(
         key_func=get_remote_address,
@@ -31,7 +42,7 @@ def create_app():
     )
     limiter.init_app(app)
     
-    # Custom error handler for rate limits
+    # Custom error handlers
     @app.errorhandler(429)
     def ratelimit_handler(e):
         return jsonify({
@@ -39,6 +50,25 @@ def create_app():
             'message': 'You have made too many requests. Please wait a moment before trying again.',
             'retry_after': getattr(e, 'retry_after', None)
         }), 429
+    
+    @app.errorhandler(404)
+    def not_found_handler(e):
+        """Handle 404 errors with custom template"""
+        from flask import render_template, request
+        
+        # Check if this is an API request
+        if request.path.startswith('/api/') or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({
+                'error': 'Not found',
+                'message': 'The requested resource was not found.'
+            }), 404
+        
+        # For regular web requests, render the 404 template
+        try:
+            return render_template('errors/404.html'), 404
+        except Exception:
+            # Fallback if template fails to render
+            return '<h1>Page Not Found</h1><p>The page you are looking for does not exist.</p>', 404
     
     # Setup custom middleware
     setup_middleware(app)
@@ -81,10 +111,12 @@ def create_app():
     from .routes.main_routes import main_bp
     from .routes.process_routes import process_bp
     from .routes.static_routes import static_bp
+    from .routes.print_routes import print_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(process_bp, url_prefix='/process')
     app.register_blueprint(static_bp, url_prefix='/static')
+    app.register_blueprint(print_bp, url_prefix='/print')
     
     # Ensure upload directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

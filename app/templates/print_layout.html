@@ -1,0 +1,233 @@
+{% extends "layout.html" %}
+
+{% block title %}Print Layout Sheet Generator - PixPort{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ versioned_url_for('static', filename='css/print_layout.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="print-layout-container">
+    <!-- Header Section -->
+    <div class="header-section">
+        <h1 class="page-title">
+            🌟 Print Layout Sheet Generator
+        </h1>
+        <p class="page-description">
+            Create a professional print sheet with multiple copies arranged perfectly for printing!
+        </p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="main-grid">
+        
+        <!-- Left Section: Image Display -->
+        <div class="image-section">
+            <div class="image-container">
+                <div class="section-title">
+                    <h3>📷 Your Photo</h3>
+                </div>
+                <div class="image-preview">
+                    <img id="source-image" 
+                         src="{{ url_for('static', filename='processed/' + filename) }}" 
+                         alt="Source photo"
+                         loading="lazy">
+                    <div class="image-info">
+                        <small id="image-filename">{{ filename }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section: Print Layout Generator -->
+        <div class="generator-section">
+            <div class="generator-card">
+                <div class="card-header">
+                    <h3>🖨️ Print Layout Sheet Generator</h3>
+                    <p>Create a professional print sheet with multiple copies arranged perfectly for printing!</p>
+                </div>
+
+                <div class="generator-form">
+                    <!-- Sheet Type Selection -->
+                    <div class="form-group">
+                        <label for="sheet-type">
+                            📄 <strong>Sheet Type:</strong>
+                        </label>
+                        <select id="sheet-type" class="form-select">
+                            {% for key, config in sheet_configs.items() %}
+                            <option value="{{ key }}" {% if key == 'A4' %}selected{% endif %}>
+                                {{ config.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Number of Photos -->
+                    <div class="form-group">
+                        <label for="num-photos">
+                            🔢 <strong>Number of Photos:</strong>
+                        </label>
+                        <select id="num-photos" class="form-select">
+                            <option value="4" selected>4 copies</option>
+                            <option value="6">6 copies</option>
+                            <option value="8">8 copies</option>
+                            <option value="9">9 copies</option>
+                            <option value="12">12 copies</option>
+                            <option value="16">16 copies</option>
+                            <option value="20">20 copies</option>
+                        </select>
+                    </div>
+
+                    <!-- Photo Size -->
+                    <div class="form-group">
+                        <label for="photo-size">
+                            📐 <strong>Photo Size:</strong>
+                        </label>
+                        <select id="photo-size" class="form-select">
+                            {% for key, size in photo_sizes.items() %}
+                            <option value="{{ key }}" {% if key == 'US' %}selected{% endif %}>
+                                {{ key }} {% if key == 'US' %}(2×2 inch){% elif key == 'INDIA' %}(35×35mm){% elif key == 'CHINA' %}(33×48mm){% else %}(35×45mm){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Margin Size -->
+                    <div class="form-group">
+                        <label for="margin-size">
+                            🔄 <strong>Margin Size:</strong>
+                        </label>
+                        <select id="margin-size" class="form-select">
+                            <option value="small">Small (recommended)</option>
+                            <option value="normal" selected>Normal (recommended)</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+
+                    <!-- Add Cutting Guides -->
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="add-cut-guides" checked>
+                            <span class="checkmark"></span>
+                            ✂️ <strong>Add cutting guides</strong>
+                        </label>
+                        <small class="help-text">Adds corner marks for easy trimming</small>
+                    </div>
+
+                    <!-- Preview Button -->
+                    <button id="preview-btn" class="btn btn-secondary btn-full">
+                        👀 Preview Layout
+                    </button>
+
+                    <!-- Generate Button -->
+                    <button id="generate-btn" class="btn btn-primary btn-full">
+                        🖨️ Create Print Sheet
+                    </button>
+
+                    <!-- Status Messages -->
+                    <div id="status-message" class="status-message"></div>
+                    <div id="progress-container" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">Generating print sheet...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div id="preview-section" class="preview-section" style="display: none;">
+        <div class="section-title">
+            <h3>👀 Layout Preview</h3>
+        </div>
+        <div id="preview-info" class="preview-info"></div>
+    </div>
+
+    <!-- Generated Sheet Section -->
+    <div id="result-section" class="result-section" style="display: none;">
+        <div class="section-title">
+            <h3>✅ Generated Print Sheet</h3>
+        </div>
+        <div class="result-actions">
+            <button id="download-sheet-btn" class="btn btn-success">
+                📥 Download Print Sheet
+            </button>
+            <button id="view-sheet-btn" class="btn btn-secondary">
+                👁️ View Full Size
+            </button>
+        </div>
+        <div class="result-preview">
+            <img id="result-image" src="" alt="Generated print sheet" loading="lazy">
+        </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+        <div class="info-card">
+            <h4>💡 Print Sheet Information</h4>
+            <ul>
+                <li><strong>Print sheets include multiple copies</strong> with cutting guides for easy trimming</li>
+                <li><strong>High resolution:</strong> 300 DPI for professional print quality</li>
+                <li><strong>Standard formats:</strong> A4, Letter, 4×6, and 5×7 inch sheets supported</li>
+                <li><strong>Perfect alignment:</strong> Photos are automatically centered with proper spacing</li>
+                <li><strong>Cost effective:</strong> Print multiple photos on one sheet to save money</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- What's Next Section -->
+    <div class="next-steps-section">
+        <div class="next-steps-card">
+            <h4>📋 What's Next?</h4>
+            <div class="next-steps-grid">
+                <div class="step">
+                    <div class="step-icon">🖨️</div>
+                    <div class="step-content">
+                        <h5>Print Your Sheet</h5>
+                        <p>Print on photo paper or high-quality white paper</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">✂️</div>
+                    <div class="step-content">
+                        <h5>Cut Along Guides</h5>
+                        <p>Use the corner marks to cut perfectly sized photos</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">📄</div>
+                    <div class="step-content">
+                        <h5>Use for Applications</h5>
+                        <p>Perfect for passport, visa, ID card applications</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-icon">💰</div>
+                    <div class="step-content">
+                        <h5>Save Money</h5>
+                        <p>Print multiple photos at once for better value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="navigation">
+        <a href="/result/{{ filename }}" class="btn btn-outline">
+            ← Back to Results
+        </a>
+    </div>
+</div>
+
+<!-- Hidden form data -->
+<input type="hidden" id="current-filename" value="{{ filename }}">
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ versioned_url_for('static', filename='js/print_layout.js') }}"></script>
+{% endblock %}

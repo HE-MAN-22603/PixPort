@@ -1,18 +1,54 @@
 {% extends "layout.html" %}
 
-{% block title %}Result - {{ filename }}{% endblock %}
+{% block title %}Result - {{ filename }} | PixPort AI Passport Photos{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Your passport photo has been processed successfully. Download in multiple formats including JPEG, PNG, PDF with professional quality.">
+<meta name="keywords" content="passport photo, AI photo processing, download passport photo, professional photo">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Open Graph Tags -->
+<meta property="og:title" content="PixPort - AI Processed Passport Photo">
+<meta property="og:description" content="Professional passport photo processed with AI technology">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.url }}">
+<meta property="og:image" content="{{ url_for('static', filename='processed/' + filename, _external=True) }}">
+<meta property="og:site_name" content="PixPort">
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PixPort - AI Processed Passport Photo">
+<meta name="twitter:description" content="Professional passport photo processed with AI technology">
+<meta name="twitter:image" content="{{ url_for('static', filename='processed/' + filename, _external=True) }}">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ImageObject",
+  "name": "AI Processed Passport Photo",
+  "description": "Professional passport photo processed with AI technology",
+  "url": "{{ url_for('static', filename='processed/' + filename, _external=True) }}",
+  "creator": {
+    "@type": "Organization",
+    "name": "PixPort"
+  },
+  "dateCreated": "{{ current_date.isoformat() if current_date else '' }}"
+}
+</script>
+{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+<link rel="stylesheet" href="{{ versioned_url_for('static', filename='css/result-modern.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="result-page">
     <!-- Success Header -->
-    <div class="success-header">
+    <div class="success-header" role="banner">
         <div class="container">
             <div class="success-content">
-                <div class="success-icon">
+                <div class="success-icon" aria-hidden="true">
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="success-text">
@@ -26,64 +62,245 @@
     <!-- Main Content -->
     <div class="container">
         <div class="result-content">
-            <!-- Image Result Section -->
+            <!-- Left Column: Image + Details -->
             <div class="image-section">
+                <!-- Image Result -->
                 <div class="image-result">
-                    <div class="result-container">
+                    <div class="result-image-container">
                         <img src="{{ url_for('static', filename='processed/' + filename) }}" 
-                             alt="Processed Photo" 
+                             alt="Processed passport photo ready for download in multiple formats" 
                              class="result-image"
-                             id="resultImage">
+                             id="resultImage"
+                             loading="eager"
+                             decoding="async"
+                             width="400"
+                             height="500"
+                             srcset="{{ url_for('static', filename='processed/' + filename) }} 1x"
+                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px">
+                        
+                        <!-- Image Status for Screen Readers -->
+                        <div id="imageStatus" class="sr-only" aria-live="polite" aria-atomic="true"></div>
                         
                         <!-- Image Controls -->
-                        <div class="image-controls">
+                        <div class="image-controls" role="toolbar" aria-label="Image controls">
                             <div class="zoom-controls">
-                                <button class="control-btn" data-action="zoom-in" title="Zoom In">
-                                    <i class="fas fa-search-plus"></i>
+                                <button class="control-btn" data-action="zoom-in" title="Zoom In" aria-label="Zoom in on image" type="button">
+                                    <i class="fas fa-search-plus" aria-hidden="true"></i>
                                 </button>
-                                <button class="control-btn" data-action="zoom-out" title="Zoom Out">
-                                    <i class="fas fa-search-minus"></i>
+                                <button class="control-btn" data-action="zoom-out" title="Zoom Out" aria-label="Zoom out on image" type="button">
+                                    <i class="fas fa-search-minus" aria-hidden="true"></i>
                                 </button>
-                                <button class="control-btn" data-action="reset" title="Reset View">
-                                    <i class="fas fa-expand"></i>
+                                <button class="control-btn" data-action="reset" title="Reset View" aria-label="Reset zoom and position" type="button">
+                                    <i class="fas fa-expand" aria-hidden="true"></i>
                                 </button>
                             </div>
                             
                             <div class="view-controls">
-                                <button class="control-btn comparison-toggle" title="Show Comparison">
-                                    <i class="fas fa-eye"></i>
+                                <button class="control-btn comparison-toggle" title="Show Comparison" aria-label="Toggle before/after comparison" type="button">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
                                 </button>
-                                <button class="control-btn share-btn" title="Share">
-                                    <i class="fas fa-share-alt"></i>
+                                <button class="control-btn share-btn" title="Share" aria-label="Share this result" type="button">
+                                    <i class="fas fa-share-alt" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Comparison View (Hidden by default) -->
-                    <div class="comparison-container">
-                        <div class="comparison-view">
+                    <div class="comparison-container" aria-hidden="true" id="comparisonContainer">
+                        <div class="comparison-view" role="region" aria-label="Before and after comparison">
                             <div class="comparison-item">
-                                <h4>Before</h4>
-                                <img src="" alt="Original" class="comparison-original">
+                                <h4 id="beforeLabel">Before</h4>
+                                <img src="" alt="Original photo before processing" class="comparison-original" loading="lazy" 
+                                     role="img" aria-labelledby="beforeLabel" tabindex="0">
                             </div>
-                            <div class="comparison-divider">
+                            <div class="comparison-divider" aria-hidden="true" role="separator">
                                 <div class="divider-line"></div>
-                                <div class="divider-handle">
-                                    <i class="fas fa-arrows-alt-h"></i>
+                                <div class="divider-handle" tabindex="0" role="button" aria-label="Drag to compare images" 
+                                     onkeydown="handleDividerKeydown(event)">
+                                    <i class="fas fa-arrows-alt-h" aria-hidden="true"></i>
                                 </div>
                             </div>
                             <div class="comparison-item">
-                                <h4>After</h4>
+                                <h4 id="afterLabel">After</h4>
                                 <img src="{{ url_for('static', filename='processed/' + filename) }}" 
-                                     alt="Processed" class="comparison-processed">
+                                     alt="Processed photo after enhancement" class="comparison-processed" loading="lazy"
+                                     role="img" aria-labelledby="afterLabel" tabindex="0">
                             </div>
+                        </div>
+                        <!-- Instructions for screen readers -->
+                        <div class="sr-only" id="comparisonInstructions">
+                            Use arrow keys to navigate between images. Press Enter on the divider handle to focus it, then use left/right arrow keys to adjust comparison.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Image Bottom Section: Details + Print Layout Generator stacked vertically -->
+                <div class="image-bottom-section">
+                    <!-- Image Details Panel -->
+                    <div class="image-stats-panel">
+                        <h2>Image Details</h2>
+                        <div class="image-stats">
+                            <!-- Stats will be populated by JavaScript -->
+                            <div class="loading-stats">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                Loading details...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Print Layout Sheet Generator Panel -->
+                    <div class="print-layout-panel">
+                        <h2>
+                            <i class="fas fa-print"></i>
+                            🌟 Print Layout Sheet Generator
+                        </h2>
+                        
+                        <p class="panel-description">
+                            Create a professional print sheet with multiple copies arranged perfectly for printing!
+                        </p>
+                        
+                        <!-- Print Layout Generator Form -->
+                        <div class="print-generator-form">
+                            <!-- Hidden field to store current filename -->
+                            <input type="hidden" id="current-filename" value="{{ filename }}">
+                            
+                            <!-- Sheet Type Selection -->
+                            <div class="form-group">
+                                <label for="print-sheet-type">
+                                    📄 <strong>Sheet Type:</strong>
+                                </label>
+                                <select id="print-sheet-type" class="form-select">
+                                    <option value="A4" selected>A4 (8.3×11.7 inch)</option>
+                                    <option value="LETTER">Letter (8.5×11 inch)</option>
+                                    <option value="4x6">4×6 inch</option>
+                                    <option value="5x7">5×7 inch</option>
+                                </select>
+                            </div>
+
+                            <!-- Number of Photos -->
+                            <div class="form-group">
+                                <label for="print-num-photos">
+                                    🔢 <strong>Number of Photos:</strong>
+                                </label>
+                                <select id="print-num-photos" class="form-select">
+                                    <option value="4" selected>4 copies</option>
+                                    <option value="6">6 copies</option>
+                                    <option value="8">8 copies</option>
+                                    <option value="9">9 copies</option>
+                                    <option value="12">12 copies</option>
+                                    <option value="16">16 copies</option>
+                                    <option value="20">20 copies</option>
+                                </select>
+                            </div>
+
+                            <!-- Photo Size -->
+                            <div class="form-group">
+                                <label for="print-photo-size">
+                                    📐 <strong>Photo Size:</strong>
+                                </label>
+                                <select id="print-photo-size" class="form-select">
+                                    <option value="US" selected>US (2×2 inch)</option>
+                                    <option value="EU">EU (35×45mm)</option>
+                                    <option value="UK">UK (35×45mm)</option>
+                                    <option value="INDIA">INDIA (35×35mm)</option>
+                                    <option value="CHINA">CHINA (33×48mm)</option>
+                                </select>
+                            </div>
+
+                            <!-- Margin Size -->
+                            <div class="form-group">
+                                <label for="print-margin-size">
+                                    🔄 <strong>Margin Size:</strong>
+                                </label>
+                                <select id="print-margin-size" class="form-select">
+                                    <option value="small">Small</option>
+                                    <option value="normal" selected>Normal (recommended)</option>
+                                    <option value="large">Large</option>
+                                </select>
+                            </div>
+
+                            <!-- Add Cutting Guides -->
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="print-cut-guides" checked>
+                                    <span class="checkmark"></span>
+                                    ✂️ <strong>Add cutting guides</strong>
+                                </label>
+                                <small class="help-text">Adds corner marks for easy trimming</small>
+                            </div>
+
+                            <!-- Preview Info -->
+                            <div id="print-preview-info" class="print-preview-info" style="display: none;">
+                                <!-- Preview content will be populated by JavaScript -->
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="print-action-buttons">
+                                <button id="print-preview-btn" class="print-btn print-btn-secondary">
+                                    👀 Preview Layout
+                                </button>
+                                <button id="print-generate-btn" class="print-btn print-btn-primary">
+                                    🖨️ Create Print Sheet
+                                </button>
+                            </div>
+
+                            <!-- Status Messages -->
+                            <div id="print-status-message" class="print-status-message"></div>
+                            <div id="print-progress-container" class="print-progress-container" style="display: none;">
+                                <div class="progress-bar">
+                                    <div id="print-progress-fill" class="progress-fill"></div>
+                                </div>
+                                <div class="progress-text">Generating print sheet...</div>
+                            </div>
+                        </div>
+
+                        <!-- Generated Sheet Result -->
+                        <div id="print-result-section" class="print-result-section" style="display: none;">
+                            <div class="print-result-header">
+                                <h4>✅ Print Sheet Generated!</h4>
+                            </div>
+                            <div class="print-result-actions">
+                                <button id="print-download-btn" class="print-btn print-btn-success">
+                                    📥 Download Print Sheet
+                                </button>
+                                <button id="print-view-btn" class="print-btn print-btn-secondary">
+                                    👁️ View Full Size
+                                </button>
+                            </div>
+                            <div class="print-result-preview">
+                                <img id="print-result-image" src="" alt="Generated print sheet" loading="lazy">
+                            </div>
+                        </div>
+                        
+                        <!-- Features Info -->
+                        <div class="print-layout-features">
+                            <div class="feature-item">
+                                <i class="fas fa-clone" aria-hidden="true"></i>
+                                <span>Multiple copies (4-20)</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-file-alt" aria-hidden="true"></i>
+                                <span>A4, Letter, 4×6 sheets</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-cut" aria-hidden="true"></i>
+                                <span>Cutting guides included</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+                                <span>Save money on printing</span>
+                            </div>
+                        </div>
+                        
+                        <div class="print-layout-info">
+                            <small>💡 Perfect for passport applications, visa photos, and ID cards</small>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Download and Actions Section -->
+            
+            <!-- Download Section (Sidebar) -->
             <div class="actions-section">
                 <!-- Download Panel -->
                 <div class="download-panel">
@@ -96,23 +313,29 @@
                     <div class="quick-downloads">
                         <button class="download-btn download-btn-main" 
                                 data-format="JPEG" 
-                                data-quality="95">
-                            <i class="fas fa-download"></i>
-                            Download JPEG (95%)
+                                data-quality="95"
+                                type="button"
+                                aria-label="Download as JPEG with 95% quality">
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                            <span class="download-text">Download JPEG (95%)</span>
                         </button>
                         
                         <div class="download-options">
                             <button class="download-btn download-btn-secondary" 
                                     data-format="PNG" 
-                                    data-quality="100">
-                                <i class="fas fa-file-image"></i>
-                                PNG
+                                    data-quality="100"
+                                    type="button"
+                                    aria-label="Download as PNG format">
+                                <i class="fas fa-file-image" aria-hidden="true"></i>
+                                <span>PNG</span>
                             </button>
                             <button class="download-btn download-btn-secondary" 
                                     data-format="PDF" 
-                                    data-quality="100">
-                                <i class="fas fa-file-pdf"></i>
-                                PDF
+                                    data-quality="100"
+                                    type="button"
+                                    aria-label="Download as PDF format">
+                                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                                <span>PDF</span>
                             </button>
                         </div>
                     </div>
@@ -123,22 +346,33 @@
                         
                         <div class="option-row">
                             <label for="download-format">Format:</label>
-                            <select id="download-format">
-                                <option value="JPEG">JPEG</option>
-                                <option value="PNG">PNG</option>
-                                <option value="WEBP">WebP</option>
-                                <option value="PDF">PDF</option>
+                            <select id="download-format" aria-describedby="format-help">
+                                <option value="JPEG">JPEG - Smaller file size</option>
+                                <option value="PNG">PNG - Best quality</option>
+                                <option value="WEBP">WebP - Modern format</option>
+                                <option value="PDF">PDF - Document format</option>
                             </select>
+                            <small id="format-help" class="help-text">Choose the format that best suits your needs</small>
                         </div>
                         
                         <div class="option-row quality-row">
                             <label for="quality-slider">Quality:</label>
                             <div class="quality-control">
                                 <input type="range" id="quality-slider" 
-                                       min="60" max="100" value="95" step="5">
-                                <span id="quality-value">95%</span>
+                                       min="60" max="100" value="95" step="5"
+                                       aria-describedby="quality-help">
+                                <span id="quality-value" class="quality-display">95%</span>
                             </div>
+                            <small id="quality-help" class="help-text">Higher quality means larger file size</small>
                         </div>
+                    </div>
+                    
+                    <!-- Download Progress -->
+                    <div class="download-progress">
+                        <div class="progress-container">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+                        <div class="progress-text"></div>
                     </div>
                     
                     <!-- Download Statistics -->
@@ -149,10 +383,10 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Additional Actions -->
-                <div class="additional-actions">
-                    <h3>What's Next?</h3>
+                
+                <!-- What's Next Section -->
+                <div class="next-steps-panel">
+                    <h2>What's Next?</h2>
                     
                     <div class="action-buttons">
                         <button class="action-btn process-again-btn">
@@ -178,18 +412,6 @@
                                 <span class="action-desc">Share this result</span>
                             </div>
                         </button>
-                    </div>
-                </div>
-
-                <!-- Image Statistics -->
-                <div class="image-stats-panel">
-                    <h3>Image Details</h3>
-                    <div class="image-stats">
-                        <!-- Stats will be populated by JavaScript -->
-                        <div class="loading-stats">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            Loading details...
-                        </div>
                     </div>
                 </div>
             </div>
@@ -236,7 +458,7 @@
 <div class="print-only" style="display: none;">
     <div class="print-header">
         <h1>PixPort - AI Passport Photo</h1>
-        <p>Generated on {{ moment().strftime('%B %d, %Y at %I:%M:%S %p') if moment else 'today' }}</p>
+        <p>Generated on {% if moment %}{{ moment().strftime('%B %d, %Y at %I:%M %p') }}{% else %}{{ current_date.strftime('%B %d, %Y') if current_date else 'today' }}{% endif %}</p>
     </div>
     
     <div class="print-image">
@@ -251,7 +473,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/result.js') }}"></script>
+<script src="{{ versioned_url_for('static', filename='js/result.js') }}"></script>
 <script>
     // Show success animation on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -312,37 +534,401 @@
         });
     }
     
-    // Initialize result page features
-    resultState.filename = '{{ filename }}';
+    // Initialize result page features - wait for result.js to load
+    document.addEventListener('resultPageReady', function() {
+        if (window.resultState) {
+            window.resultState.filename = '{{ filename }}';
+            loadImageMetadata();
+        }
+    });
     
-    // Auto-load metadata
-    loadImageMetadata();
+    // Keyboard handler for comparison divider
+    function handleDividerKeydown(event) {
+        const divider = event.target;
+        const container = divider.closest('.comparison-view');
+        
+        if (!container) return;
+        
+        let handled = false;
+        
+        switch(event.key) {
+            case 'ArrowLeft':
+                // Move divider left (show more of before image)
+                event.preventDefault();
+                adjustComparison(-10);
+                announceToScreenReader('Showing more of the original image');
+                handled = true;
+                break;
+                
+            case 'ArrowRight':
+                // Move divider right (show more of after image)  
+                event.preventDefault();
+                adjustComparison(10);
+                announceToScreenReader('Showing more of the processed image');
+                handled = true;
+                break;
+                
+            case 'Home':
+                // Reset to show only before image
+                event.preventDefault();
+                adjustComparison(-100, true);
+                announceToScreenReader('Showing only original image');
+                handled = true;
+                break;
+                
+            case 'End':
+                // Reset to show only after image
+                event.preventDefault();
+                adjustComparison(100, true);
+                announceToScreenReader('Showing only processed image');
+                handled = true;
+                break;
+        }
+        
+        if (handled) {
+            event.stopPropagation();
+        }
+    }
     
-    // Setup keyboard shortcuts
+    // Helper function to adjust comparison slider
+    function adjustComparison(amount, absolute = false) {
+        const container = document.querySelector('.comparison-view');
+        if (!container) return;
+        
+        // This would integrate with your comparison slider logic
+        // For now, just update ARIA labels
+        const beforeImg = container.querySelector('.comparison-original');
+        const afterImg = container.querySelector('.comparison-processed');
+        
+        if (beforeImg && afterImg) {
+            // Update visibility percentages in ARIA labels if needed
+            beforeImg.setAttribute('aria-label', `Original photo before processing - ${absolute ? (amount < 0 ? '100' : '0') : 'partially'} visible`);
+            afterImg.setAttribute('aria-label', `Processed photo after enhancement - ${absolute ? (amount > 0 ? '100' : '0') : 'partially'} visible`);
+        }
+    }
+    
+    // Helper function to announce changes to screen readers
+    function announceToScreenReader(message) {
+        const statusDiv = document.getElementById('imageStatus');
+        if (statusDiv) {
+            statusDiv.textContent = message;
+            // Clear after a delay to avoid cluttering
+            setTimeout(() => {
+                statusDiv.textContent = '';
+            }, 1000);
+        }
+    }
+    
+    // Keyboard shortcuts are now handled in result.js to avoid conflicts
+    // Only keep unique shortcuts not handled there
     document.addEventListener('keydown', function(e) {
         // Only process if not in an input field
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') return;
         
         switch(e.key.toLowerCase()) {
-            case 'd':
-                e.preventDefault();
-                document.querySelector('.download-btn-main')?.click();
-                break;
-            case 'n':
-                e.preventDefault();
-                document.querySelector('.new-photo-btn')?.click();
-                break;
-            case 'r':
-                e.preventDefault();
-                document.querySelector('.process-again-btn')?.click();
-                break;
             case 'c':
-                if (e.ctrlKey) {
+                // Only handle Ctrl+C for copying link when NO text is selected
+                // This allows normal text copying to work
+                if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+                    const selection = window.getSelection();
+                    const selectedText = selection ? selection.toString().trim() : '';
+                    
+                    // If user has selected text, let browser handle it normally
+                    if (selectedText.length > 0) {
+                        return; // Don't prevent default, allow normal copy
+                    }
+                    
+                    // Only trigger our custom copy link if no text is selected
                     e.preventDefault();
                     document.querySelector('.copy-link-btn')?.click();
+                    announceToScreenReader('Copying page link to clipboard');
                 }
                 break;
         }
     });
+    
+    // =========================================================
+    // Inline Print Layout Generator JavaScript
+    // =========================================================
+    
+    class InlinePrintLayoutGenerator {
+        constructor() {
+            this.filename = '{{ filename }}';
+            this.currentSheetUrl = null;
+            this.init();
+        }
+
+        init() {
+            this.bindEvents();
+            this.updatePreview(); // Show initial preview
+        }
+
+        bindEvents() {
+            // Form change events for live preview
+            const formElements = [
+                'print-sheet-type',
+                'print-num-photos', 
+                'print-photo-size',
+                'print-margin-size'
+            ];
+
+            formElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', () => this.updatePreview());
+                }
+            });
+
+            // Button events
+            const previewBtn = document.getElementById('print-preview-btn');
+            const generateBtn = document.getElementById('print-generate-btn');
+            const downloadBtn = document.getElementById('print-download-btn');
+            const viewBtn = document.getElementById('print-view-btn');
+
+            if (previewBtn) {
+                previewBtn.addEventListener('click', () => this.showPreview());
+            }
+
+            if (generateBtn) {
+                generateBtn.addEventListener('click', () => this.generatePrintSheet());
+            }
+
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => this.downloadSheet());
+            }
+
+            if (viewBtn) {
+                viewBtn.addEventListener('click', () => this.viewFullSize());
+            }
+        }
+
+        async updatePreview() {
+            if (!this.filename) return;
+
+            try {
+                const formData = this.getFormData();
+                
+                const response = await fetch('/print/api/print-preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.displayPreviewInfo(result.preview);
+                }
+            } catch (error) {
+                console.error('Preview update failed:', error);
+            }
+        }
+
+        async showPreview() {
+            const previewSection = document.getElementById('print-preview-info');
+            if (previewSection) {
+                previewSection.style.display = 'block';
+            }
+            await this.updatePreview();
+        }
+
+        displayPreviewInfo(preview) {
+            const previewInfo = document.getElementById('print-preview-info');
+            if (!previewInfo) return;
+
+            const html = `
+                <h4>📋 Print Layout Preview</h4>
+                <p><strong>Sheet Type:</strong> ${preview.sheet_name}</p>
+                <p><strong>Photo Size:</strong> ${preview.photo_size} passport format</p>
+                <p><strong>Requested Photos:</strong> ${preview.requested_photos} copies</p>
+                <p><strong>Actual Photos:</strong> <span style="color: #28a745; font-weight: 600;">${preview.actual_photos} copies</span> ${preview.actual_photos < preview.requested_photos ? '(maximum that fits)' : ''}</p>
+                <p><strong>Layout:</strong> ${preview.layout} grid arrangement</p>
+                ${preview.actual_photos < preview.requested_photos ? 
+                    '<p style="color: #ffc107; background: rgba(255, 193, 7, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(255, 193, 7, 0.3);"><strong>Note:</strong> Some photos don\'t fit. Try a larger sheet size or smaller photo size.</p>' 
+                    : ''}
+            `;
+            
+            previewInfo.innerHTML = html;
+        }
+
+        async generatePrintSheet() {
+            if (!this.filename) {
+                this.showStatus('error', 'No filename available');
+                return;
+            }
+
+            const generateBtn = document.getElementById('print-generate-btn');
+            const progressContainer = document.getElementById('print-progress-container');
+            
+            // Disable button and show progress
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.textContent = '🔄 Generating...';
+            }
+            
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+            }
+
+            this.hideStatus();
+
+            try {
+                const formData = this.getFormData();
+                console.log('Sending cutting guides value:', formData.add_cut_guides);
+
+                const response = await fetch('/print/api/generate-print-sheet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.currentSheetUrl = result.download_url;
+                    this.showResult(result.sheet_filename, result.download_url);
+                    this.showStatus('success', '✅ Print sheet generated successfully!');
+                    
+                    // Scroll to result
+                    const resultSection = document.getElementById('print-result-section');
+                    if (resultSection) {
+                        setTimeout(() => {
+                            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to generate print sheet');
+                }
+
+            } catch (error) {
+                console.error('Generation failed:', error);
+                this.showStatus('error', `❌ Error: ${error.message}`);
+            } finally {
+                // Reset button and hide progress
+                if (generateBtn) {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '🖨️ Create Print Sheet';
+                }
+                
+                if (progressContainer) {
+                    progressContainer.style.display = 'none';
+                }
+            }
+        }
+
+        showResult(filename, downloadUrl) {
+            const resultSection = document.getElementById('print-result-section');
+            const resultImage = document.getElementById('print-result-image');
+            const downloadBtn = document.getElementById('print-download-btn');
+            const viewBtn = document.getElementById('print-view-btn');
+
+            if (resultSection) {
+                resultSection.style.display = 'block';
+            }
+
+            if (resultImage) {
+                resultImage.src = downloadUrl;
+                resultImage.alt = `Print sheet: ${filename}`;
+            }
+
+            // Update download button
+            if (downloadBtn) {
+                downloadBtn.onclick = () => this.downloadFile(downloadUrl, filename);
+            }
+
+            // Update view button  
+            if (viewBtn) {
+                viewBtn.onclick = () => this.openInNewTab(downloadUrl);
+            }
+        }
+
+        downloadSheet() {
+            if (this.currentSheetUrl) {
+                const link = document.createElement('a');
+                link.href = this.currentSheetUrl;
+                link.download = this.currentSheetUrl.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        downloadFile(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Show success message
+            this.showStatus('success', '📥 Print sheet download started!');
+        }
+
+        openInNewTab(url) {
+            window.open(url, '_blank');
+        }
+
+        viewFullSize() {
+            if (this.currentSheetUrl) {
+                this.openInNewTab(this.currentSheetUrl);
+            }
+        }
+
+        getFormData() {
+            const cutGuidesElement = document.getElementById('print-cut-guides');
+            return {
+                filename: this.filename,
+                sheet_type: document.getElementById('print-sheet-type')?.value || 'A4',
+                num_photos: parseInt(document.getElementById('print-num-photos')?.value || '4'),
+                photo_size: document.getElementById('print-photo-size')?.value || 'US',
+                margin_size: document.getElementById('print-margin-size')?.value || 'normal',
+                add_cut_guides: cutGuidesElement ? cutGuidesElement.checked : true
+            };
+        }
+
+        showStatus(type, message) {
+            const statusElement = document.getElementById('print-status-message');
+            if (!statusElement) return;
+
+            statusElement.className = `print-status-message ${type}`;
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+
+            // Auto hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    this.hideStatus();
+                }, 5000);
+            }
+        }
+
+        hideStatus() {
+            const statusElement = document.getElementById('print-status-message');
+            if (statusElement) {
+                statusElement.style.display = 'none';
+            }
+        }
+    }
+    
+    // Initialize the inline print layout generator
+    window.inlinePrintLayoutGenerator = new InlinePrintLayoutGenerator();
+    
 </script>
+
+<!-- Print Sheet Download Dropdown Script -->
+<script src="{{ url_for('static', filename='js/print-sheet-dropdown.js') }}"></script>
+
 {% endblock %}

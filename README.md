@@ -145,13 +145,15 @@ PixPort/
 │   ├── .gitignore                 # Git ignore rules (comprehensive)
 │   ├── requirements.txt           # Python dependencies
 │   ├── runtime.txt               # Python version for deployment
-│   ├── Procfile                  # Heroku deployment config
+│   ├── Procfile                  # Railway/Heroku deployment config
 │   ├── railway.json              # Railway deployment config
-│   └── wsgi.py                   # WSGI entry point
+│   └── README.md                 # This file - main documentation
 │
 ├── 🚀 Application Entry Points
 │   ├── app.py                    # Main Flask application
 │   ├── debug_start.py            # Debug mode startup
+│   ├── dev_start.py              # Development startup script
+│   ├── start_dev.bat             # Windows development startup
 │   └── download_models.py        # AI model download script
 │
 ├── 📦 Core Application (app/)
@@ -163,6 +165,7 @@ PixPort/
 │   │   ├── __init__.py
 │   │   ├── main_routes.py        # Home, about, contact pages
 │   │   ├── process_routes.py     # Image processing API
+│   │   ├── print_routes.py       # Print layout & PDF generation
 │   │   └── static_routes.py      # Static file serving
 │   │
 │   ├── ⚙️ services/               # Business logic & AI processing
@@ -179,13 +182,18 @@ PixPort/
 │   │   │   ├── index.css         # Home page styles
 │   │   │   ├── layout.css        # Global layout
 │   │   │   ├── preview.css       # Image preview styles
-│   │   │   └── result.css        # Result page styles
+│   │   │   ├── result.css        # Result page styles
+│   │   │   ├── result-modern.css # Modern result page styles
+│   │   │   └── print_layout.css  # Print sheet layouts
 │   │   │
 │   │   ├── js/                   # JavaScript functionality
 │   │   │   ├── script.js         # Main application logic
 │   │   │   ├── preview.js        # Image preview handling
 │   │   │   ├── result.js         # Result page interactions
-│   │   │   └── face_align.js     # Face alignment utilities
+│   │   │   ├── face_align.js     # Face alignment utilities
+│   │   │   ├── cache-buster.js   # Cache management
+│   │   │   ├── print_layout.js   # Print layout functionality
+│   │   │   └── print-sheet-dropdown.js # Print sheet controls
 │   │   │
 │   │   ├── images/               # Demo & sample images
 │   │   │   ├── demo1.jpg         # Sample passport photo 1
@@ -203,32 +211,47 @@ PixPort/
 │       ├── index.html            # Home page & upload interface
 │       ├── preview.html          # Image preview & processing options
 │       ├── result.html           # Download & result display
+│       ├── print_layout.html     # Print sheet layout page
 │       ├── about.html            # About page
 │       ├── features.html         # Features showcase
-│       └── contact.html          # Contact information
+│       ├── contact.html          # Contact information
+│       └── errors/               # Error page templates
+│           └── 404.html          # 404 Not Found page
 │
-├── 🧪 Testing & Development
-│   ├── simple_test.py            # Basic functionality tests
-│   ├── test_app.py               # Application tests
-│   ├── test_startup.py           # Startup sequence tests
-│   ├── test_comprehensive.py     # Comprehensive test suite
-│   ├── test_all_endpoints.py     # API endpoint tests
-│   ├── test_fixed_app.py         # Bug fix validation
-│   └── test_image_info_fix.py    # Image processing tests
-│
-├── 📚 Documentation & Reports
-│   ├── README.md                 # Main project documentation
+├── 📚 Documentation (docs/)
+│   ├── README.md                 # Documentation index
 │   ├── QUICKSTART.md             # Quick setup guide
 │   ├── DEPLOYMENT_CHECKLIST.md   # Deployment validation
 │   ├── RAILWAY_DEPLOYMENT.md     # Railway-specific deployment
 │   ├── COMPREHENSIVE_BUG_ANALYSIS.md  # Bug analysis reports
 │   ├── FIXES_IMPLEMENTED.md      # Implementation tracking
-│   └── FINAL_VALIDATION_REPORT.md # Quality assurance
+│   ├── FINAL_VALIDATION_REPORT.md # Quality assurance
+│   └── UNWANTED_FILES_GUIDE.md   # File management guide
 │
-├── 🛠️ Utility Scripts
-│   ├── activate_venv.bat         # Windows virtual env activation
-│   ├── build.sh                  # Build script for deployment
-│   └── create_demo_images.py     # Generate demo images
+├── 🧪 Tests & Development Tools (tests/)
+│   ├── __init__.py               # Test package init
+│   ├── README.md                 # Testing documentation
+│   │
+│   ├── 🔬 Test Files
+│   │   ├── test_download_format.py      # Download format tests (active)
+│   │   ├── simple_test.py               # Basic functionality tests
+│   │   ├── test_app.py                  # Application tests
+│   │   ├── test_startup.py              # Startup sequence tests
+│   │   ├── test_comprehensive.py        # Comprehensive test suite
+│   │   ├── test_all_endpoints.py        # API endpoint tests
+│   │   ├── test_direct_download.py      # Download functionality tests
+│   │   ├── test_download.py             # Download tests
+│   │   ├── test_fixed_app.py            # Bug fix validation
+│   │   ├── test_image_info_fix.py       # Image processing tests
+│   │   ├── test_other_api.py            # Other API endpoint tests
+│   │   ├── test_routes.py               # Route testing
+│   │   ├── test_static.py               # Static file serving tests
+│   │   └── test_urllib.py               # URL library tests
+│   │
+│   └── 🛠️ Development Utilities
+│       ├── create_demo_images.py        # Generate demo images
+│       ├── activate_venv.bat            # Windows virtual env activation
+│       └── build.sh                     # Build script for deployment
 │
 └── 🔧 Virtual Environment (gitignored)
     └── venv/                     # Python virtual environment
@@ -240,6 +263,8 @@ PixPort/
         │       ├── cv2/          # OpenCV image processing
         │       ├── PIL/          # Pillow image library
         │       ├── onnxruntime/  # ML model runtime
+        │       ├── flask_limiter/ # Rate limiting
+        │       ├── gunicorn/     # Production WSGI server
         │       └── [many more...]# Dependencies
         └── Scripts/              # Executable scripts
 ```
@@ -248,24 +273,40 @@ PixPort/
 
 #### 🎯 **Core Functionality**
 - **`app/services/`** - AI processing pipeline (background removal, enhancement, resizing)
-- **`app/routes/`** - RESTful API endpoints and web routes
-- **`app/static/`** - Frontend assets with responsive design
-- **`app/templates/`** - Server-side rendered HTML pages
+- **`app/routes/`** - RESTful API endpoints and web routes including print/PDF generation
+- **`app/static/`** - Frontend assets with responsive design and print layouts
+- **`app/templates/`** - Server-side rendered HTML pages including error handling
 
-#### 🧪 **Quality Assurance**  
-- **`test_*.py`** - Comprehensive test coverage for all components
-- **`*_ANALYSIS.md`** - Detailed documentation of fixes and improvements
+#### 📚 **Documentation & Organization**
+- **`docs/`** - All project documentation in one organized location
+  - Quick start guides, deployment checklists, bug analysis reports
+  - Keeps the project root clean and professional
+  - Easy navigation for developers and contributors
+
+#### 🧪 **Testing & Quality Assurance**  
+- **`tests/`** - Organized testing directory with comprehensive coverage
+  - **`test_download_format.py`** - Active download format validation tests
+  - **Legacy test files** - Comprehensive test suite for all components
+  - **Development utilities** - Build scripts, demo generators, environment tools
+  - Centralized testing documentation and guidelines
 
 #### 🚀 **Deployment Ready**
-- **`Procfile`** - Heroku deployment configuration
-- **`railway.json`** - Railway platform deployment
-- **`wsgi.py`** - Production WSGI server entry point
-- **`build.sh`** - Automated build process
+- **`Procfile`** - Railway/Heroku deployment configuration
+- **`railway.json`** - Railway platform deployment settings
+- **Production utilities** - Gunicorn server, build automation
+- **Environment management** - Secure configuration templates
 
 #### 🔒 **Security & Configuration**
 - **`.env.example`** - Secure environment variable template
-- **`config.py`** - Centralized configuration management
-- **`middleware.py`** - Security headers and request handling
+- **`app/config.py`** - Centralized configuration management
+- **`app/middleware.py`** - Security headers and request handling
+- **Rate limiting** - Flask-Limiter integration for API protection
+
+#### 🎨 **Enhanced Features**
+- **Print layouts** - PDF generation and multi-photo print sheets
+- **Modern UI** - Updated styling with responsive design
+- **Cache management** - Client-side cache busting for updated assets
+- **Error handling** - Custom 404 pages and graceful error responses
 
 ## 🔧 Configuration
 
