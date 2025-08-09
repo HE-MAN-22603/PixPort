@@ -3,7 +3,6 @@ providers = ["python"]
 
 [variables]
 # Build-time variables for faster installation
-PIP_NO_CACHE_DIR = "1"
 PIP_DISABLE_PIP_VERSION_CHECK = "1"
 PYTHONUNBUFFERED = "1"
 PYTHONDONTWRITEBYTECODE = "1"
@@ -22,8 +21,8 @@ cmds = [
 [phases.install]
 # Install phase - optimized pip installation
 cmds = [
-    "pip install --no-cache-dir --upgrade pip wheel setuptools",
-    "pip install --no-cache-dir -r requirements.txt"
+    "python -m pip install --upgrade pip wheel setuptools",
+    "python -m pip install -r requirements.txt"
 ]
 
 [phases.build]

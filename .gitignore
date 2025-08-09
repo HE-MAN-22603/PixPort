@@ -442,5 +442,3 @@ backups/
 IMPLEMENTATION_SUMMARY.md
 RAILWAY_DEPLOY_GUIDE.md
 .gitignore_UPDATES.md
-
-requirements-railway.txt
