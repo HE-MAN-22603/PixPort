@@ -38,11 +38,12 @@ class ModelManager:
     def get_session(self, model_name: str = 'u2net'):
         """Get or create a rembg session with memory optimization"""
         with self._lock:
-            # Use a lighter model for Railway's memory constraints
+            # Force smaller model for Railway's memory constraints
+            original_model = model_name
             if os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
-                # Use smaller model in production to save memory
-                if model_name == 'u2net':
-                    model_name = 'u2netp'  # Smaller version
+                # Always use the smallest model in production
+                model_name = 'u2netp'  # Smallest available model
+                logger.info(f"Production mode: using {model_name} instead of {original_model}")
             
             # Reuse session if same model
             if self._session is not None and self._current_model == model_name:
@@ -54,20 +55,35 @@ class ModelManager:
                 logger.info(f"Switching from {self._current_model} to {model_name}")
                 self._clear_session()
             
-            # Create new session
-            try:
-                logger.info(f"Creating new session for model: {model_name}")
-                self._session = new_session(model_name)
-                self._current_model = model_name
-                logger.info(f"Session created successfully for {model_name}")
-                return self._session
-            except Exception as e:
-                logger.error(f"Failed to create session for {model_name}: {e}")
-                # Fallback to smaller model
-                if model_name != 'u2netp':
-                    logger.info("Falling back to u2netp model")
-                    return self.get_session('u2netp')
-                raise e
+            # Create new session with retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    logger.info(f"Creating session for {model_name} (attempt {attempt + 1}/{max_retries})")
+                    
+                    # Force garbage collection before loading
+                    import gc
+                    gc.collect()
+                    
+                    # Create session
+                    self._session = new_session(model_name)
+                    self._current_model = model_name
+                    logger.info(f"Session created successfully for {model_name}")
+                    return self._session
+                    
+                except Exception as e:
+                    logger.error(f"Attempt {attempt + 1} failed for {model_name}: {e}")
+                    
+                    # Clear any partial state
+                    self._clear_session()
+                    
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(2)  # Wait before retry
+                    else:
+                        # Final fallback - raise error for calling code to handle
+                        logger.error(f"All attempts failed for {model_name}")
+                        raise RuntimeError(f"Failed to load AI model after {max_retries} attempts: {str(e)}")
     
     def _clear_session(self):
         """Clear current session and free memory"""

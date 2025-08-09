@@ -33,9 +33,14 @@ def ensure_models():
         print('Models will be downloaded when first needed')
         return False
 
-# Only try to ensure models if not in Railway startup or development mode
+# Skip model loading on Railway to prevent startup memory issues
 if not os.environ.get('RAILWAY_ENVIRONMENT_NAME') and not os.environ.get('SKIP_AI_MODELS'):
     ensure_models()
+else:
+    if 'logger' in locals():
+        logger.info('Skipping AI model preload - models will load on first request')
+    else:
+        print('⏩ Skipping AI model preload - models will load on first request')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

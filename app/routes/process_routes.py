@@ -14,11 +14,35 @@ from ..services.bg_changer import change_background, smart_background_change
 from ..services.enhancer import enhance_image
 from ..services.photo_resizer import resize_to_passport
 from ..services.utils import allowed_file, save_uploaded_file, validate_image_file
+from ..services.model_manager import model_manager
 
 process_bp = Blueprint('process', __name__)
 
 # Initialize limiter for processing routes with improved limits
 limiter = Limiter(key_func=get_remote_address)
+
+# Memory management helper function
+def check_memory_availability():
+    """Check if system has enough memory for AI processing"""
+    try:
+        import psutil
+        memory = psutil.virtual_memory()
+        process = psutil.Process()
+        
+        # Get current memory usage
+        process_memory_mb = process.memory_info().rss / 1024 / 1024
+        available_memory_mb = memory.available / 1024 / 1024
+        
+        # Check if we have at least 200MB available and process is under 400MB
+        if available_memory_mb < 200 or process_memory_mb > 400:
+            return False, f"Insufficient memory (Available: {available_memory_mb:.1f}MB, Process: {process_memory_mb:.1f}MB)"
+        
+        return True, "Memory OK"
+        
+    except Exception as e:
+        # If we can't check memory, allow processing but log warning
+        current_app.logger.warning(f"Memory check failed: {e}")
+        return True, "Memory check unavailable"
 
 # Input validation helper functions
 def validate_filename_parameter(filename):
@@ -137,6 +161,16 @@ def upload_file():
 @limiter.limit("5 per minute")
 def remove_bg(filename):
     """Remove background from image"""
+    # Check memory availability first
+    memory_ok, memory_msg = check_memory_availability()
+    if not memory_ok:
+        current_app.logger.warning(f"Memory check failed for background removal: {memory_msg}")
+        return jsonify({
+            'error': 'Service temporarily unavailable',
+            'message': 'Server is under high load. Please try again in a few moments.',
+            'fallback_available': True
+        }), 503
+    
     # Get additional options from JSON body if provided
     data = request.get_json() or {}
     # Check both upload and processed folders

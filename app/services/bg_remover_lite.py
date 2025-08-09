@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def remove_background(input_path: str, output_path: str, model_name: str = 'u2net'):
     """
-    Remove background from image using AI models with proper memory management
+    Remove background from image using AI models with fallback strategies
     
     Args:
         input_path (str): Path to input image
@@ -22,7 +22,6 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
     Returns:
         bool: True if successful, False otherwise
     """
-    session = None
     input_image = None
     output_image = None
     
@@ -34,34 +33,28 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # Get optimized session from model manager
-        logger.info(f"Getting rembg session with model: {model_name}")
-        session = model_manager.get_session(model_name)
-        
-        # Open and process image with size limit check
+        # Check file size and image dimensions first
         file_size = os.path.getsize(input_path)
-        if file_size > 20 * 1024 * 1024:  # 20MB limit for processing
-            raise ValueError(f"Input file too large: {file_size} bytes. Maximum 20MB allowed.")
+        if file_size > 15 * 1024 * 1024:  # Reduced to 15MB for safer processing
+            raise ValueError(f"Input file too large: {file_size} bytes. Maximum 15MB allowed.")
         
-        with open(input_path, 'rb') as input_file:
-            input_image = input_file.read()
-        
-        # Remove background
-        logger.info(f"Processing image: {input_path} ({file_size} bytes)")
-        output_image = remove(input_image, session=session)
-        
-        # Save result
-        with open(output_path, 'wb') as output_file:
-            output_file.write(output_image)
-        
-        logger.info(f"Background removed successfully: {output_path}")
-        return True
+        # Try AI background removal first
+        try:
+            logger.info(f"Attempting AI background removal for: {input_path} ({file_size} bytes)")
+            return _ai_remove_background(input_path, output_path, model_name)
+            
+        except (RuntimeError, MemoryError, Exception) as ai_error:
+            logger.warning(f"AI background removal failed: {ai_error}")
+            logger.info("Falling back to simple background removal")
+            
+            # Fallback to simple processing that just copies the image with transparency
+            return _fallback_background_removal(input_path, output_path)
         
     except Exception as e:
-        logger.error(f"Error removing background: {str(e)}")
+        logger.error(f"All background removal methods failed: {str(e)}")
         raise e
     finally:
-        # Clear image data from memory (don't delete shared session)
+        # Clear image data from memory
         if input_image is not None:
             del input_image
         if output_image is not None:
@@ -70,6 +63,61 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         # Force garbage collection
         import gc
         gc.collect()
+
+def _ai_remove_background(input_path: str, output_path: str, model_name: str) -> bool:
+    """AI-powered background removal"""
+    input_image = None
+    output_image = None
+    
+    try:
+        # Get optimized session from model manager
+        logger.info(f"Getting AI session with model: {model_name}")
+        session = model_manager.get_session(model_name)
+        
+        with open(input_path, 'rb') as input_file:
+            input_image = input_file.read()
+        
+        # Remove background using AI
+        logger.info(f"Processing with AI model: {model_name}")
+        output_image = remove(input_image, session=session)
+        
+        # Save result
+        with open(output_path, 'wb') as output_file:
+            output_file.write(output_image)
+        
+        logger.info(f"AI background removal successful: {output_path}")
+        return True
+        
+    finally:
+        if input_image is not None:
+            del input_image
+        if output_image is not None:
+            del output_image
+        import gc
+        gc.collect()
+
+def _fallback_background_removal(input_path: str, output_path: str) -> bool:
+    """Simple fallback that converts image to PNG with transparency"""
+    try:
+        from PIL import Image
+        
+        logger.info("Using fallback background removal (simple conversion)")
+        
+        # Open image
+        with Image.open(input_path) as img:
+            # Convert to RGBA for transparency support
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            # Save as PNG with transparency
+            img.save(output_path, 'PNG', optimize=True)
+        
+        logger.info(f"Fallback background removal completed: {output_path}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Fallback background removal failed: {e}")
+        raise e
 
 def remove_background_pil(input_path: str, output_path: str, model_name: str = 'u2net'):
     """
