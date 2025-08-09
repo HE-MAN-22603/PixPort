@@ -112,11 +112,13 @@ def create_app():
     from .routes.process_routes import process_bp
     from .routes.static_routes import static_bp
     from .routes.print_routes import print_bp
+    from .routes.health_routes import health_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(process_bp, url_prefix='/process')
     app.register_blueprint(static_bp, url_prefix='/static')
     app.register_blueprint(print_bp, url_prefix='/print')
+    app.register_blueprint(health_bp, url_prefix='/health')
     
     # Ensure upload directories exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

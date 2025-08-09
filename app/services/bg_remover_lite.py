@@ -3,9 +3,10 @@ Background removal service using rembg and U²-Net
 """
 
 import os
-from rembg import new_session, remove
+from rembg import remove
 from PIL import Image
 import logging
+from .model_manager import model_manager
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +34,9 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # Create rembg session
-        logger.info(f"Creating rembg session with model: {model_name}")
-        session = new_session(model_name)
+        # Get optimized session from model manager
+        logger.info(f"Getting rembg session with model: {model_name}")
+        session = model_manager.get_session(model_name)
         
         # Open and process image with size limit check
         file_size = os.path.getsize(input_path)
@@ -60,19 +61,7 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         logger.error(f"Error removing background: {str(e)}")
         raise e
     finally:
-        # Explicit cleanup to free memory
-        if session is not None:
-            try:
-                # Clear session if possible
-                if hasattr(session, 'clear'):
-                    session.clear()
-                elif hasattr(session, 'close'):
-                    session.close()
-                del session
-            except Exception as cleanup_error:
-                logger.warning(f"Error during session cleanup: {cleanup_error}")
-        
-        # Clear image data from memory
+        # Clear image data from memory (don't delete shared session)
         if input_image is not None:
             del input_image
         if output_image is not None:
@@ -120,8 +109,8 @@ def remove_background_pil(input_path: str, output_path: str, model_name: str = '
             input_image.close()  # Close original image
             input_image = rgb_image
         
-        # Create session and remove background
-        session = new_session(model_name)
+        # Get session from model manager
+        session = model_manager.get_session(model_name)
         
         # Convert PIL image to bytes for rembg
         import io
@@ -146,17 +135,7 @@ def remove_background_pil(input_path: str, output_path: str, model_name: str = '
         logger.error(f"Error in PIL background removal: {str(e)}")
         raise e
     finally:
-        # Explicit cleanup to free memory
-        if session is not None:
-            try:
-                if hasattr(session, 'clear'):
-                    session.clear()
-                elif hasattr(session, 'close'):
-                    session.close()
-                del session
-            except Exception as cleanup_error:
-                logger.warning(f"Error during session cleanup: {cleanup_error}")
-        
+        # Explicit cleanup to free memory (don't delete shared session)
         if input_image is not None:
             try:
                 input_image.close()
