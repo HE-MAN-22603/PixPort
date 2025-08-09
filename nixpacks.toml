@@ -5,7 +5,10 @@ PIP_DISABLE_PIP_VERSION_CHECK = "1"
 PYTHONUNBUFFERED = "1"
 PYTHONDONTWRITEBYTECODE = "1"
 
-[providers.python]
+# Providers configuration - specify which providers to use
+providers = ["python"]
+
+[variables.python]
 # Python configuration
 version = "3.11"
 
