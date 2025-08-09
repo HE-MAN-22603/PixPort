@@ -1,3 +1,6 @@
+# Providers configuration - specify which providers to use
+providers = ["python"]
+
 [variables]
 # Build-time variables for faster installation
 PIP_NO_CACHE_DIR = "1"
@@ -5,10 +8,7 @@ PIP_DISABLE_PIP_VERSION_CHECK = "1"
 PYTHONUNBUFFERED = "1"
 PYTHONDONTWRITEBYTECODE = "1"
 
-# Providers configuration - specify which providers to use
-providers = ["python"]
-
-[variables.python]
+[python]
 # Python configuration
 version = "3.11"
 
