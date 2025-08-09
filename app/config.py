@@ -68,10 +68,18 @@ class Config:
     # AI Model settings
     REMBG_MODEL = os.environ.get('REMBG_MODEL') or 'u2net'
     
-    # Rate limiting - Use Redis URL from Railway if available
+    # Rate limiting - Use Redis URL from Railway if available, fallback to memory
     REDIS_URL = os.environ.get('REDIS_URL')
     if REDIS_URL:
-        RATELIMIT_STORAGE_URL = REDIS_URL
+        try:
+            # Test Redis connection
+            import redis
+            redis_client = redis.from_url(REDIS_URL)
+            redis_client.ping()
+            RATELIMIT_STORAGE_URL = REDIS_URL
+        except Exception:
+            # Redis not available, use memory storage
+            RATELIMIT_STORAGE_URL = 'memory://'
     else:
         RATELIMIT_STORAGE_URL = 'memory://'
     

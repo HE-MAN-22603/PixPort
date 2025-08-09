@@ -1,0 +1,35 @@
+[variables]
+# Build-time variables for faster installation
+PIP_NO_CACHE_DIR = "1"
+PIP_DISABLE_PIP_VERSION_CHECK = "1"
+PYTHONUNBUFFERED = "1"
+PYTHONDONTWRITEBYTECODE = "1"
+
+[providers.python]
+# Python configuration
+version = "3.11"
+
+[phases.setup]
+# Setup phase - install system dependencies quickly
+cmds = [
+    "apt-get update -qq",
+    "apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1"
+]
+
+[phases.install]
+# Install phase - optimized pip installation
+cmds = [
+    "pip install --no-cache-dir --upgrade pip wheel setuptools",
+    "pip install --no-cache-dir -r requirements.txt"
+]
+
+[phases.build]
+# Build phase - prepare application
+cmds = [
+    "mkdir -p /tmp/pixport/uploads",
+    "mkdir -p /tmp/pixport/processed"
+]
+
+[start]
+# Start command
+cmd = "gunicorn -c gunicorn.conf.py wsgi:app"
