@@ -83,6 +83,24 @@ model_cache/
 huggingface_cache/
 torch_cache/
 onnx_cache/
+
+# Tiny U²-Net Specific
+.u2netp/
+~/.u2netp/
+/root/.u2netp/
+u2net*.onnx
+u2netp*.onnx
+rembg_models/
+.rembg_cache/
+tiny_u2net_cache/
+
+# ONNX Runtime and optimization
+onnxruntime_cache/
+.onnx_cache/
+session_cache/
+quantized_models/
+optimized_models/
+
 # OpenCV haar cascades (if downloaded)
 opencv_data/
 haarcascades/
@@ -128,6 +146,19 @@ coverage.xml
 .prof
 test-results/
 test_output/
+
+# Tiny U²-Net Test Output
+temp_test_output/
+temp_test/
+tiny_u2net_test_*
+test_*.png
+test_*.jpg
+bg_removed_*.png
+bg_color_*.jpg
+*_temp.png
+*_temp.jpg
+integration_test.*
+optimization_test/
 
 # IDE and Editors
 .vscode/
@@ -300,6 +331,13 @@ TODO.md
 NOTES.txt
 lazy_loading_example.py
 
+# Implementation and Test Files (keep the ones we want)
+# Keep main test and implementation files
+!test_tiny_u2net.py
+!IMPLEMENTATION_SUMMARY.md
+# But ignore temporary test outputs
+IMPLEMENTATION_SUMMARY_backup.*
+
 # Railway Specific
 .railway/
 railway.toml
@@ -335,6 +373,17 @@ secret_key.txt
 !docs/
 !docs/*.md
 
+# Scripts Directory
+# Keep scripts directory and Python files
+!scripts/
+!scripts/*.py
+!scripts/*.sh
+!scripts/*.bat
+scripts/__pycache__/
+scripts/*.pyc
+scripts/temp_*
+scripts/*.log
+
 # Tests Directory Content (exclude test outputs but keep structure)
 tests/__pycache__/
 tests/*.pyc
@@ -362,3 +411,7 @@ dist/
 *_backup.*
 *_old.*
 backups/
+
+#UNWANTED FILES
+IMPLEMENTATION_SUMMARY.md
+.gitignore_UPDATES.md

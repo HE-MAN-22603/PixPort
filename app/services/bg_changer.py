@@ -153,9 +153,9 @@ def remove_and_change_background(input_path: str, output_path: str, bg_color: tu
         logger.error(f"Error in remove and change background: {str(e)}")
         raise e
 
-def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
+def tiny_u2net_background_change(input_path: str, output_path: str, bg_color: tuple) -> bool:
     """
-    Intelligently change background color - works on both original images and transparent background images
+    Remove background and change color using Tiny U²-Net in one optimized step
     
     Args:
         input_path (str): Path to input image
@@ -166,6 +166,38 @@ def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
         bool: True if successful
     """
     try:
+        logger.info(f"Using Tiny U²-Net for background change to {bg_color}")
+        
+        # Import the Tiny U²-Net service
+        from .tiny_u2net_service import tiny_u2net_service
+        
+        # Use the integrated background removal and color change
+        return tiny_u2net_service.change_background_color(input_path, output_path, bg_color)
+        
+    except Exception as e:
+        logger.error(f"Error in Tiny U²-Net background change: {e}")
+        return False
+
+def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
+    """
+    Intelligently change background color - works on both original images and transparent background images
+    Priority: Tiny U²-Net -> Original smart method
+    
+    Args:
+        input_path (str): Path to input image
+        output_path (str): Path to save output
+        bg_color (tuple): RGB color tuple
+    
+    Returns:
+        bool: True if successful
+    """
+    try:
+        # Try Tiny U²-Net first (best quality and memory efficiency)
+        if tiny_u2net_background_change(input_path, output_path, bg_color):
+            logger.info("Tiny U²-Net background change succeeded")
+            return True
+        
+        logger.warning("Tiny U²-Net failed, falling back to smart method")
         # Create output directory
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         

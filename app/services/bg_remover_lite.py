@@ -38,7 +38,17 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         if file_size > 15 * 1024 * 1024:  # Reduced to 15MB for safer processing
             raise ValueError(f"Input file too large: {file_size} bytes. Maximum 15MB allowed.")
         
-        # Try lightweight OpenCV method first (most reliable for 512MB)
+        # Try Tiny U²-Net first (best balance of quality and memory usage)
+        try:
+            logger.info(f"Attempting Tiny U²-Net background removal for: {input_path} ({file_size} bytes)")
+            from .tiny_u2net_service import tiny_u2net_service
+            if tiny_u2net_service.remove_background(input_path, output_path):
+                logger.info("Tiny U²-Net background removal succeeded")
+                return True
+        except Exception as tiny_u2net_error:
+            logger.warning(f"Tiny U²-Net method failed: {tiny_u2net_error}")
+        
+        # Try lightweight OpenCV method as secondary option
         try:
             logger.info(f"Attempting lightweight background removal for: {input_path} ({file_size} bytes)")
             from .lightweight_bg_removal import lightweight_remover

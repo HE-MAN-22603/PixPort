@@ -40,10 +40,14 @@ class ModelManager:
         with self._lock:
             # Force smaller model for Railway's memory constraints
             original_model = model_name
-            if os.environ.get('RAILWAY_ENVIRONMENT_NAME'):
-                # Always use the smallest model in production
-                model_name = 'u2netp'  # Smallest available model
-                logger.info(f"Production mode: using {model_name} instead of {original_model}")
+            if os.environ.get('RAILWAY_ENVIRONMENT_NAME') or self._is_memory_constrained():
+                # Always use the smallest model in production or memory-constrained environments
+                model_name = 'u2netp'  # Tiny U²-Net - smallest available model (~4.7MB)
+                logger.info(f"Memory-constrained mode: using {model_name} instead of {original_model}")
+            elif model_name == 'u2net':
+                # Default to u2netp for better memory usage
+                model_name = 'u2netp'
+                logger.info(f"Defaulting to memory-efficient u2netp instead of {original_model}")
             
             # Reuse session if same model
             if self._session is not None and self._current_model == model_name:
@@ -103,6 +107,34 @@ class ModelManager:
                 self._current_model = None
                 # Force garbage collection
                 gc.collect()
+    
+    def _is_memory_constrained(self) -> bool:
+        """Check if system is memory constrained"""
+        try:
+            import psutil
+            # Get total system memory in MB
+            total_memory_mb = psutil.virtual_memory().total / 1024 / 1024
+            
+            # Consider memory constrained if less than 1GB total system memory
+            # or if we're using more than 70% of available memory
+            available_memory_mb = psutil.virtual_memory().available / 1024 / 1024
+            memory_usage_percent = psutil.virtual_memory().percent
+            
+            is_constrained = (
+                total_memory_mb < 1024 or  # Less than 1GB total
+                available_memory_mb < 256 or  # Less than 256MB available
+                memory_usage_percent > 70  # Using more than 70% of memory
+            )
+            
+            if is_constrained:
+                logger.info(f"Memory constrained detected: {total_memory_mb:.1f}MB total, {available_memory_mb:.1f}MB available, {memory_usage_percent:.1f}% used")
+            
+            return is_constrained
+            
+        except Exception as e:
+            logger.warning(f"Could not check memory constraints: {e}")
+            # Default to constrained mode for safety
+            return True
     
     def clear_all(self):
         """Clear all loaded models and free memory"""

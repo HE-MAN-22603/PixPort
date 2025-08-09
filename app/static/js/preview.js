@@ -471,8 +471,51 @@ function resetImagePosition() {
 function loadExistingImage() {
     const previewImage = document.querySelector('.preview-image');
     if (previewImage && previewImage.src && previewImage.src !== window.location.href) {
+        console.log('🖼️ Loading existing image:', previewImage.src);
         previewState.currentImage = previewImage.src;
-        previewState.originalImage = previewImage.src;
+        
+        // Try to determine if this is the original image or processed
+        const src = previewImage.src;
+        let originalSrc = src;
+        
+        // If this looks like a processed image, try to find the original
+        if (src.includes('/static/processed/')) {
+            // Extract filename and clean it from processing suffixes
+            let filename = src.split('/').pop();
+            console.log('🔍 Original processed filename:', filename);
+            
+            // Strip all processing suffixes to get the original filename
+            const suffixesToRemove = [
+                /_bg_hex_[a-fA-F0-9]+/g,           // hex colors like _bg_hex_ffffff
+                /_bg_(white|light_blue|light_gray|red|cream|blue|gray)/g,  // preset colors
+                /_enhanced/g,
+                /_passport_[a-z]+/g,
+                /_passport_photo/g,
+                /_resized/g,
+                /_no_bg/g,
+                /_temp_[a-zA-Z0-9_]+/g,
+                /_\d+x\d+/g                        // dimensions like _600x600
+            ];
+            
+            // Apply all suffix removals
+            suffixesToRemove.forEach(suffix => {
+                filename = filename.replace(suffix, '');
+            });
+            
+            console.log('🔍 Cleaned original filename:', filename);
+            originalSrc = `/static/uploads/${filename}`;
+            console.log('🔍 Detected processed image, original should be:', originalSrc);
+        }
+        
+        // Store both current and original references
+        previewState.originalImage = originalSrc;
+        previewImage.setAttribute('data-original-src', originalSrc);
+        
+        console.log('✅ Image state initialized:', {
+            current: previewState.currentImage,
+            original: previewState.originalImage
+        });
+        
         updateImageInfo();
     }
 }
@@ -698,20 +741,118 @@ function initializeControls() {
     }
     
     // Bottom action buttons (Upload New, Reset All, Go Download Professional)
-    const uploadNewBtn = document.querySelector('.upload-new-btn');
-    const resetAllBtn = document.querySelector('.reset-all-btn');
-    const downloadProfessionalBtn = document.querySelector('.download-professional-btn');
+    console.log('🔍 Searching for bottom action buttons...');
     
+    // Multiple selectors for Reset All button to ensure we find it
+    const resetAllSelectors = [
+        '.reset-all-btn',
+        'button.reset-all-btn',
+        '.action-btn.secondary:nth-child(2)', // Second button in the grid
+        'button[class*="reset-all"]',
+        'button:contains("Reset All")',
+        '.bottom-actions button:nth-of-type(2)',
+        '.action-buttons-grid button:nth-child(2)'
+    ];
+    
+    let resetAllBtn = null;
+    let uploadNewBtn = null;
+    let downloadProfessionalBtn = null;
+    
+    // Try each selector until we find the reset button
+    for (const selector of resetAllSelectors) {
+        try {
+            if (selector.includes('contains')) {
+                // Handle text-based selection manually
+                const buttons = document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    if (btn.textContent && btn.textContent.trim().includes('Reset All')) {
+                        resetAllBtn = btn;
+                        console.log(`✅ Found Reset All button using text content: "${btn.textContent.trim()}"`); 
+                        break;
+                    }
+                }
+            } else {
+                resetAllBtn = document.querySelector(selector);
+            }
+            if (resetAllBtn) {
+                console.log(`✅ Found Reset All button using selector: ${selector}`);
+                break;
+            }
+        } catch (e) {
+            console.log(`❌ Selector failed: ${selector} - ${e.message}`);
+        }
+    }
+    
+    // Find other buttons
+    uploadNewBtn = document.querySelector('.upload-new-btn') || 
+                  document.querySelector('button[class*="upload-new"]') ||
+                  document.querySelector('.action-buttons-grid button:first-child');
+                  
+    downloadProfessionalBtn = document.querySelector('.download-professional-btn') || 
+                             document.querySelector('button[class*="download-professional"]') ||
+                             document.querySelector('.action-buttons-grid button:last-child');
+    
+    console.log('🔍 Debug: Bottom action buttons found:', {
+        uploadNewBtn: !!uploadNewBtn,
+        resetAllBtn: !!resetAllBtn,
+        downloadProfessionalBtn: !!downloadProfessionalBtn
+    });
+    
+    // Add event listeners
     if (uploadNewBtn) {
         uploadNewBtn.addEventListener('click', handleUploadNewPhoto);
+        console.log('✅ Upload New button event listener added');
+    } else {
+        console.error('❌ Upload New button not found');
     }
     
     if (resetAllBtn) {
         resetAllBtn.addEventListener('click', handleResetAll);
+        console.log('✅ Reset All button event listener added to:', resetAllBtn);
+        
+        // Add additional debugging - log what happens when button is clicked
+        resetAllBtn.addEventListener('click', function(event) {
+            console.log('🔥 Reset All button clicked! Event:', event);
+            console.log('🔥 Button element:', this);
+        });
+        
+        // Test the button immediately
+        console.log('🧪 Testing Reset All button click programmatically...');
+        setTimeout(() => {
+            if (resetAllBtn.click && typeof resetAllBtn.click === 'function') {
+                console.log('✅ Button.click() method available');
+            } else {
+                console.error('❌ Button.click() method not available');
+            }
+        }, 1000);
+        
+    } else {
+        console.error('❌ Reset All button not found with any selector!');
+        
+        // Last resort: find all buttons and list them
+        const allButtons = document.querySelectorAll('button');
+        console.log('🔍 All buttons found on page:');
+        allButtons.forEach((btn, index) => {
+            console.log(`  Button ${index + 1}: Classes="${btn.className}", Text="${btn.textContent?.trim()}", ID="${btn.id}"`);
+        });
+        
+        // Try to find by text content as final fallback
+        const resetBtnByText = Array.from(allButtons).find(btn => 
+            btn.textContent && btn.textContent.toLowerCase().includes('reset')
+        );
+        
+        if (resetBtnByText) {
+            console.log('🎯 Found reset button by text content:', resetBtnByText);
+            resetBtnByText.addEventListener('click', handleResetAll);
+            console.log('✅ Event listener added to reset button found by text');
+        }
     }
     
     if (downloadProfessionalBtn) {
         downloadProfessionalBtn.addEventListener('click', handleGoDownloadProfessional);
+        console.log('✅ Download Professional button event listener added');
+    } else {
+        console.error('❌ Download Professional button not found');
     }
     
     // Legacy action buttons - REMOVED to prevent conflicts with new handlers
@@ -1198,25 +1339,111 @@ function handleResetAll() {
         // Reset UI elements
         resetUIElements();
         
-        // If we have an original image, restore it
-        if (previewState.originalImage) {
-            previewState.currentImage = previewState.originalImage;
-            const previewImage = document.querySelector('.preview-image');
-            if (previewImage) {
-                previewImage.src = previewState.originalImage;
-                previewImage.style.transform = 'scale(1) rotate(0deg)';
-            }
+        // Restore the original image
+        console.log('🔄 Current previewState.originalImage:', previewState.originalImage);
+        console.log('🔄 Current previewState.currentImage:', previewState.currentImage);
+        
+        const previewImage = document.querySelector('.preview-image');
+        if (!previewImage) {
+            console.error('❌ Preview image element not found');
+            throw new Error('Preview image element not found');
+        }
+        
+        let originalImageUrl = null;
+        
+        // Try to find original image in multiple ways
+        if (previewState.originalImage && previewState.originalImage.includes('/static/uploads/')) {
+            // Use stored original image if available
+            originalImageUrl = previewState.originalImage;
+            console.log('✅ Using stored original image:', originalImageUrl);
         } else {
-            // If no original image stored, reload the original file from URL
+            // Try to construct original URL from current filename
             const currentFilename = getCurrentFilename();
-            const originalUrl = `/static/uploads/${currentFilename}`;
+            console.log('🔍 Current filename from URL:', currentFilename);
             
-            const previewImage = document.querySelector('.preview-image');
-            if (previewImage) {
-                previewImage.src = originalUrl;
-                previewImage.style.transform = 'scale(1) rotate(0deg)';
-                previewState.currentImage = originalUrl;
+            if (currentFilename) {
+                // Strip all processing suffixes to get the original filename
+                let originalFilename = currentFilename;
+                
+                // Remove all processing suffixes in order
+                const suffixesToRemove = [
+                    /_bg_hex_[a-fA-F0-9]+/g,           // hex colors like _bg_hex_ffffff
+                    /_bg_(white|light_blue|light_gray|red|cream|blue|gray)/g,  // preset colors
+                    /_enhanced/g,
+                    /_passport_[a-z]+/g,
+                    /_passport_photo/g,
+                    /_resized/g,
+                    /_no_bg/g,
+                    /_temp_[a-zA-Z0-9_]+/g,
+                    /_\d+x\d+/g                        // dimensions like _600x600
+                ];
+                
+                // Apply all suffix removals
+                suffixesToRemove.forEach(suffix => {
+                    originalFilename = originalFilename.replace(suffix, '');
+                });
+                
+                console.log('🔍 Processed filename:', currentFilename);
+                console.log('🔍 Cleaned original filename:', originalFilename);
+                
+                // Try different URL patterns with the cleaned filename
+                const possibleUrls = [
+                    `/static/uploads/${originalFilename}`,
+                    `/uploads/${originalFilename}`,
+                    previewImage.getAttribute('data-original-src') // Check if original src is stored as data attribute
+                ];
+                
+                // Try to find a working URL
+                for (const url of possibleUrls) {
+                    if (url) {
+                        originalImageUrl = url;
+                        console.log('🔍 Trying original URL:', url);
+                        break;
+                    }
+                }
             }
+        }
+        
+        if (!originalImageUrl) {
+            // Last resort: try to extract from current image src
+            const currentSrc = previewImage.src;
+            console.log('🔍 Current image src:', currentSrc);
+            
+            if (currentSrc && currentSrc.includes('/static/')) {
+                // If current src looks like a processed image, try to clean it up
+                let cleanUrl = currentSrc;
+                
+                // Remove common processing parameters and suffixes
+                cleanUrl = cleanUrl.split('?')[0]; // Remove query parameters
+                
+                // Try to find base upload URL pattern
+                if (cleanUrl.includes('/static/')) {
+                    originalImageUrl = cleanUrl;
+                }
+            }
+        }
+        
+        if (originalImageUrl) {
+            console.log('✅ Restoring to original image:', originalImageUrl);
+            
+            // Store original in data attribute for future resets
+            if (!previewImage.getAttribute('data-original-src')) {
+                previewImage.setAttribute('data-original-src', originalImageUrl);
+            }
+            
+            // Update state and UI
+            previewState.currentImage = originalImageUrl;
+            previewState.originalImage = originalImageUrl;
+            
+            // Reset image display
+            previewImage.src = originalImageUrl;
+            previewImage.style.transform = 'scale(1) rotate(0deg)';
+            previewImage.style.filter = 'none'; // Reset any CSS filters
+            
+            console.log('✅ Image reset successfully to:', originalImageUrl);
+        } else {
+            console.error('❌ Could not determine original image URL for reset');
+            throw new Error('Could not find original image to reset to');
         }
         
         showSuccessMessage('All changes have been reset!');
@@ -1260,6 +1487,8 @@ function handleGoDownloadProfessional() {
 
 // Helper function to reset UI elements
 function resetUIElements() {
+    console.log('🔄 Resetting UI elements...');
+    
     // Reset color selections
     document.querySelectorAll('.color-circle').forEach(circle => {
         circle.classList.remove('selected');
@@ -1284,9 +1513,39 @@ function resetUIElements() {
     if (heightInput) heightInput.value = '';
     
     // Reset rotation input
+    const rotateInput = document.querySelector('#rotateInput');
+    if (rotateInput) {
+        rotateInput.value = '0';
+    }
+    
+    // Reset tilt input (alternative selector)
     const tiltInput = document.querySelector('.tilt-input');
     if (tiltInput) {
         tiltInput.value = '0';
+    }
+    
+    // Reset dropdown selections to default values
+    const photoSizeSelect = document.querySelector('#photoSize');
+    if (photoSizeSelect) {
+        photoSizeSelect.selectedIndex = 0;
+        console.log('✅ Photo size dropdown reset');
+    }
+    
+    const dpiSettingSelect = document.querySelector('#dpiSetting');
+    if (dpiSettingSelect) {
+        dpiSettingSelect.selectedIndex = 0;
+        console.log('✅ DPI setting dropdown reset');
+    }
+    
+    // Reset other form selects if they exist
+    const outputFormatSelect = document.querySelector('#output-format');
+    if (outputFormatSelect) {
+        outputFormatSelect.selectedIndex = 0;
+    }
+    
+    const outputSizeSelect = document.querySelector('#output-size');
+    if (outputSizeSelect) {
+        outputSizeSelect.selectedIndex = 0;
     }
     
     // Reset all enhancement sliders
@@ -1305,6 +1564,22 @@ function resetUIElements() {
     if (zoomDisplay) {
         zoomDisplay.textContent = '100%';
     }
+    
+    // Reset any custom file inputs
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.value = '';
+    });
+    
+    // Reset any text inputs that might contain user data
+    const textInputs = document.querySelectorAll('input[type="text"]:not(.hex-input)');
+    textInputs.forEach(input => {
+        if (!input.classList.contains('hex-input')) {
+            input.value = '';
+        }
+    });
+    
+    console.log('✅ All UI elements reset successfully');
 }
 
 /* ============================================
@@ -1316,12 +1591,26 @@ function initializeFormHandling() {
     const formatSelect = document.querySelector('#output-format');
     const sizeSelect = document.querySelector('#output-size');
     
+    // Photo Size and DPI settings
+    const photoSizeSelect = document.querySelector('#photoSize');
+    const dpiSettingSelect = document.querySelector('#dpiSetting');
+    
     if (formatSelect) {
         formatSelect.addEventListener('change', handleFormatChange);
     }
     
     if (sizeSelect) {
         sizeSelect.addEventListener('change', handleSizeChange);
+    }
+    
+    // Add Photo Size change handler
+    if (photoSizeSelect) {
+        photoSizeSelect.addEventListener('change', handlePhotoSizeChange);
+    }
+    
+    // Add DPI setting change handler
+    if (dpiSettingSelect) {
+        dpiSettingSelect.addEventListener('change', handleDpiSettingChange);
     }
     
     // Numeric input validations
@@ -1345,6 +1634,171 @@ function handleSizeChange(e) {
     
     // Auto-fill width/height inputs based on preset
     updateSizeInputs(size);
+}
+
+// Photo Size dropdown change handler (for passport/ID photo sizes)
+async function handlePhotoSizeChange(e) {
+    const photoSize = e.target.value;
+    console.log('Photo size changed to:', photoSize);
+    
+    if (!photoSize) return;
+    
+    try {
+        showLoadingOverlay(`Applying ${photoSize} photo format...`);
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        // Map photo sizes to backend endpoints or parameters
+        let country = photoSize;
+        let dimensions = null;
+        
+        // Define standard dimensions for different photo sizes
+        const photoDimensions = {
+            'india': { width: 600, height: 600 },
+            'us': { width: 600, height: 600 }, // 2x2 inches at 300 DPI
+            'uk': { width: 413, height: 531 }, // 45x35mm
+            'canada': { width: 590, height: 826 }, // 50x70mm
+            'australia': { width: 413, height: 531 }, // Same as UK
+            'schengen': { width: 413, height: 531 } // Same as UK
+        };
+        
+        if (photoDimensions[photoSize.toLowerCase()]) {
+            dimensions = photoDimensions[photoSize.toLowerCase()];
+        }
+        
+        // Use the passport/quick resize endpoint
+        let endpoint = 'quick_passport';
+        let requestData = { country: country };
+        
+        // If we have specific dimensions, use the resize endpoint instead
+        if (dimensions) {
+            endpoint = 'resize';
+            requestData = {
+                country: country,
+                width: dimensions.width,
+                height: dimensions.height
+            };
+        }
+        
+        const response = await fetch(`/process/${endpoint}/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(`Photo resized for ${photoSize.toUpperCase()} format!`);
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+                
+                // Auto-fill the custom resize inputs with the applied dimensions
+                if (dimensions) {
+                    const widthInput = document.querySelector('#resize-width');
+                    const heightInput = document.querySelector('#resize-height');
+                    if (widthInput) widthInput.value = dimensions.width;
+                    if (heightInput) heightInput.value = dimensions.height;
+                }
+            }
+        } else {
+            throw new Error(result.error || `Failed to apply ${photoSize} format`);
+        }
+        
+    } catch (error) {
+        console.error('Photo size change error:', error);
+        showErrorMessage(`Failed to apply ${photoSize} format: ` + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
+}
+
+// DPI Setting dropdown change handler
+async function handleDpiSettingChange(e) {
+    const dpiValue = e.target.value;
+    console.log('DPI setting changed to:', dpiValue);
+    
+    if (!dpiValue) return;
+    
+    // Get current dimensions from resize inputs or use defaults
+    const widthInput = document.querySelector('#resize-width');
+    const heightInput = document.querySelector('#resize-height');
+    
+    let width = widthInput ? parseInt(widthInput.value) : null;
+    let height = heightInput ? parseInt(heightInput.value) : null;
+    
+    // If no dimensions are set, use standard passport photo dimensions
+    if (!width || !height) {
+        width = 600;
+        height = 600;
+        
+        // Update the input fields with these values
+        if (widthInput) widthInput.value = width;
+        if (heightInput) heightInput.value = height;
+        
+        showInfoMessage(`Using standard passport dimensions (${width}x${height}px) with ${dpiValue} DPI`);
+    }
+    
+    try {
+        showLoadingOverlay(`Applying ${dpiValue} DPI setting...`);
+        
+        // Get current filename from URL
+        const filename = getCurrentFilename();
+        
+        // Use the resize endpoint with DPI parameter
+        const requestData = {
+            country: 'US', // Default country
+            width: width,
+            height: height,
+            dpi: parseInt(dpiValue)
+        };
+        
+        const response = await fetch(`/process/resize/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccessMessage(`Image processed with ${dpiValue} DPI setting!`);
+            // Update the preview image with the processed result
+            if (result.output_filename) {
+                const newImageUrl = `/static/processed/${result.output_filename}`;
+                updatePreviewImage(newImageUrl);
+                previewState.currentImage = newImageUrl;
+                // Update the URL to reflect the new file
+                window.history.pushState({}, '', `/preview/${result.output_filename}`);
+            }
+        } else {
+            throw new Error(result.error || `Failed to apply ${dpiValue} DPI setting`);
+        }
+        
+    } catch (error) {
+        console.error('DPI setting change error:', error);
+        showErrorMessage(`Failed to apply ${dpiValue} DPI setting: ` + error.message);
+    } finally {
+        hideLoadingOverlay();
+    }
 }
 
 function updateFormatOptions(format) {
