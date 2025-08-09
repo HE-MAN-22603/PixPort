@@ -18,12 +18,7 @@ cmds = [
     "apt-get install -y --no-install-recommends libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 libglib2.0-dev pkg-config libfontconfig1 libxss1"
 ]
 
-[phases.install]
-# Install phase - optimized pip installation
-cmds = [
-    "python -m pip install --upgrade pip wheel setuptools",
-    "python -m pip install -r requirements.txt"
-]
+# Let Nixpacks handle Python package installation automatically
 
 [phases.build]
 # Build phase - prepare application
