@@ -341,21 +341,44 @@ IMPLEMENTATION_SUMMARY_backup.*
 # Railway Specific
 .railway/
 railway.toml
+railway_deployment.log
 
 # Memory monitoring and performance
 memory_reports/
 performance_logs/
 *.perf
+memory_usage_*.log
+railway_memory_*.json
 
 # External API keys (if using remove.bg etc.)
 REMOVEBG_API_KEY
 *.api_key
 api_keys.txt
 
+# Railway-optimized model cache
+railway_bg_cache/
+isnet_cache/
+railway_models/
+minimal_cv_cache/
+
+# Railway-specific model files
+isnet-general-use*.onnx
+isnet*.pth
+railway_optimized_models/
+
 # Lightweight processing temp files
 lightweight_temp/
 opencv_temp/
 processing_cache/
+railway_temp/
+minimal_bg_temp/
+
+# New service test files
+test_railway_bg.py
+railway_test_*.png
+railway_test_*.jpg
+minimal_test_*.png
+model_status_test.json
 
 # Gunicorn specific
 gunicorn.log

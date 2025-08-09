@@ -48,7 +48,7 @@ def get_cache_headers():
         'ETag': str(hash(request.path))
     }
 
-@static_bp.route('uploads/<filename>')
+@static_bp.route('/uploads/<filename>')
 def serve_upload(filename):
     """Securely serve uploaded files with validation and caching"""
     try:
@@ -102,7 +102,7 @@ def serve_upload(filename):
         logger.error(f"Error serving upload file {filename}: {str(e)}")
         abort(500)
 
-@static_bp.route('processed/<filename>')
+@static_bp.route('/processed/<filename>')
 def serve_processed(filename):
     """Securely serve processed files with validation and caching"""
     try:

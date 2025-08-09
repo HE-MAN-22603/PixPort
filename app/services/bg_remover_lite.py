@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 def remove_background(input_path: str, output_path: str, model_name: str = 'u2net'):
     """
-    Remove background from image using AI models with fallback strategies
+    Remove background from image using Railway-optimized models with fallback strategies
     
     Args:
         input_path (str): Path to input image
         output_path (str): Path to save output image
-        model_name (str): Model to use ('u2net', 'u2netp', 'silueta')
+        model_name (str): Model to use (automatically optimized for Railway)
     
     Returns:
         bool: True if successful, False otherwise
@@ -33,52 +33,60 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         # Create output directory if it doesn't exist
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # Check file size and image dimensions first
+        # Check file size for Railway deployment
         file_size = os.path.getsize(input_path)
-        if file_size > 15 * 1024 * 1024:  # Reduced to 15MB for safer processing
-            raise ValueError(f"Input file too large: {file_size} bytes. Maximum 15MB allowed.")
+        is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+        max_file_size = 8 * 1024 * 1024 if is_railway else 15 * 1024 * 1024  # 8MB for Railway, 15MB for local
         
-        # Try Tiny U²-Net first (best balance of quality and memory usage)
-        try:
-            logger.info(f"Attempting Tiny U²-Net background removal for: {input_path} ({file_size} bytes)")
-            from .tiny_u2net_service import tiny_u2net_service
-            if tiny_u2net_service.remove_background(input_path, output_path):
-                logger.info("Tiny U²-Net background removal succeeded")
-                return True
-        except Exception as tiny_u2net_error:
-            logger.warning(f"Tiny U²-Net method failed: {tiny_u2net_error}")
+        if file_size > max_file_size:
+            raise ValueError(f"Input file too large: {file_size} bytes. Maximum {max_file_size//1024//1024}MB allowed for {'Railway' if is_railway else 'local'} deployment.")
         
-        # Try lightweight OpenCV method as secondary option
-        try:
-            logger.info(f"Attempting lightweight background removal for: {input_path} ({file_size} bytes)")
-            from .lightweight_bg_removal import lightweight_remover
-            if lightweight_remover.remove_background(input_path, output_path):
-                logger.info("Lightweight background removal succeeded")
-                return True
-        except Exception as lightweight_error:
-            logger.warning(f"Lightweight method failed: {lightweight_error}")
+        logger.info(f"Processing image: {input_path} ({file_size} bytes) - {'Railway' if is_railway else 'Local'} deployment")
         
-        # Try AI background removal as backup (if memory allows)
-        try:
-            logger.info("Trying AI background removal")
-            return _ai_remove_background(input_path, output_path, model_name)
-            
-        except (RuntimeError, MemoryError, Exception) as ai_error:
-            logger.warning(f"AI background removal failed: {ai_error}")
-            logger.info("Trying external API fallback")
-            
-            # Try external API
+        # Priority 1: Railway-optimized isnet-general-use (tiny model ~1.6MB)
+        if is_railway or file_size > 5 * 1024 * 1024:  # Use for Railway or large files
             try:
-                from .external_bg_removal import remove_background_api
-                if remove_background_api(input_path, output_path):
-                    logger.info("External API background removal succeeded")
+                logger.info(f"Attempting Railway-optimized isnet-general-use for: {input_path}")
+                from .railway_bg_remover import railway_bg_remover
+                if railway_bg_remover.remove_background(input_path, output_path):
+                    logger.info("✅ Railway isnet-general-use background removal succeeded")
                     return True
-            except Exception as api_error:
-                logger.warning(f"External API failed: {api_error}")
-            
-            logger.info("Falling back to simple background removal")
-            # Final fallback to simple processing
-            return _fallback_background_removal(input_path, output_path)
+            except Exception as railway_error:
+                logger.warning(f"Railway isnet-general-use failed: {railway_error}")
+        
+        # Priority 2: Tiny U²-Net (fallback for local or if Railway method fails)
+        if not is_railway:  # Only try for local deployment
+            try:
+                logger.info(f"Attempting Tiny U²-Net background removal for: {input_path}")
+                from .tiny_u2net_service import tiny_u2net_service
+                if tiny_u2net_service.remove_background(input_path, output_path):
+                    logger.info("✅ Tiny U²-Net background removal succeeded")
+                    return True
+            except Exception as tiny_u2net_error:
+                logger.warning(f"Tiny U²-Net method failed: {tiny_u2net_error}")
+        
+        # Priority 3: Minimal memory OpenCV method (guaranteed to work)
+        try:
+            logger.info(f"Attempting minimal memory CV background removal for: {input_path}")
+            from .minimal_bg_remover import minimal_bg_remover
+            if minimal_bg_remover.remove_background(input_path, output_path):
+                logger.info("✅ Minimal CV background removal succeeded")
+                return True
+        except Exception as minimal_error:
+            logger.warning(f"Minimal CV method failed: {minimal_error}")
+        
+        # Priority 4: Legacy AI method (only for local with sufficient memory)
+        if not is_railway:
+            try:
+                logger.info("Trying legacy AI background removal")
+                return _ai_remove_background(input_path, output_path, 'u2netp')  # Force tiny model
+                
+            except (RuntimeError, MemoryError, Exception) as ai_error:
+                logger.warning(f"Legacy AI background removal failed: {ai_error}")
+        
+        # Priority 5: Simple fallback (always works)
+        logger.info("Using simple fallback background removal")
+        return _fallback_background_removal(input_path, output_path)
         
     except Exception as e:
         logger.error(f"All background removal methods failed: {str(e)}")
