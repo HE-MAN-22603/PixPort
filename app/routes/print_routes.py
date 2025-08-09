@@ -9,10 +9,16 @@ import os
 import uuid
 import io
 import base64
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.units import inch
 from ..routes.main_routes import sanitize_filename
+
+# Optional reportlab import for PDF functionality
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4, letter
+    from reportlab.lib.units import inch
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 
 print_bp = Blueprint('print', __name__)
 
@@ -237,6 +243,8 @@ def create_print_sheet(source_path, original_filename, sheet_type, num_photos, p
     
     # Save with appropriate format and quality
     if output_format.upper() == 'PDF':
+        if not REPORTLAB_AVAILABLE:
+            raise ValueError("PDF generation not available - reportlab not installed")
         return create_pdf_sheet(sheet, sheet_filename, sheet_config, sheet_type)
     elif output_format.upper() == 'JPEG':
         # Convert to RGB for JPEG (no transparency)
