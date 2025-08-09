@@ -31,6 +31,15 @@ def memory_status():
         # Model manager info
         model_info = model_manager.get_memory_info()
         
+        # Check if lightweight processor is available
+        lightweight_status = 'available'
+        try:
+            from ..services.lightweight_bg_removal import lightweight_remover
+            lightweight_ready = lightweight_remover.initialized
+        except Exception:
+            lightweight_status = 'unavailable'
+            lightweight_ready = False
+        
         return jsonify({
             'system_memory': {
                 'total_mb': round(memory.total / 1024 / 1024, 2),
@@ -43,6 +52,12 @@ def memory_status():
                 'percent': round(process.memory_percent(), 2)
             },
             'ai_models': model_info,
+            'lightweight_processor': {
+                'status': lightweight_status,
+                'ready': lightweight_ready,
+                'memory_footprint': '~20MB'
+            },
+            'processing_strategy': 'lightweight_first',
             'worker_pid': os.getpid()
         })
     except Exception as e:

@@ -63,19 +63,29 @@ results/
 # AI/ML Models and Cache
 *.onnx
 *.pth
+*.pt
 *.h5
 *.pkl
 *.joblib
 *.model
 *.weights
+*.bin
 models/
 .rembg/
 .u2net/
 ~/.u2net/
 ~/.rembg/
+/root/.u2net/
+/root/.rembg/
 cache/
 model_cache/
 .cache/
+huggingface_cache/
+torch_cache/
+onnx_cache/
+# OpenCV haar cascades (if downloaded)
+opencv_data/
+haarcascades/
 
 # Image Files (large/temporary)
 *.jpg
@@ -288,6 +298,37 @@ local_config.py
 personal_notes.md
 TODO.md
 NOTES.txt
+lazy_loading_example.py
+
+# Railway Specific
+.railway/
+railway.toml
+
+# Memory monitoring and performance
+memory_reports/
+performance_logs/
+*.perf
+
+# External API keys (if using remove.bg etc.)
+REMOVEBG_API_KEY
+*.api_key
+api_keys.txt
+
+# Lightweight processing temp files
+lightweight_temp/
+opencv_temp/
+processing_cache/
+
+# Gunicorn specific
+gunicorn.log
+gunicorn.error.log
+worker_*.log
+
+# Production secrets
+production.env
+.env.production
+.env.prod
+secret_key.txt
 
 # Documentation Directory
 # Keep docs directory and all documentation files

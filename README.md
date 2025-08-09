@@ -1,5 +1,9 @@
 <div align="center">
-  <h1>🎯 PixPort - AI Passport Photo Maker</h1>
+# PixPort - AI Passport Photo Maker 🚀
+
+**Lightning-fast background removal with multiple AI fallbacks!**
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/your-template)
   
   <p><strong>Professional passport photos made simple with AI technology</strong></p>
   
