@@ -15,8 +15,8 @@ PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
 [deploy]
 # Deployment configuration
-healthcheckPath = "/health"
-healthcheckTimeout = 300
+# healthcheckPath = "/health"
+# healthcheckTimeout = 300
 startCommand = "gunicorn -c gunicorn.conf.py wsgi:app"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
