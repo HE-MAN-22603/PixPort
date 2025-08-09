@@ -13,10 +13,10 @@ PYTHONDONTWRITEBYTECODE = "1"
 version = "3.11"
 
 [phases.setup]
-# Setup phase - install system dependencies quickly
+# Setup phase - install system dependencies for OpenCV and image processing
 cmds = [
     "apt-get update -qq",
-    "apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1"
+    "apt-get install -y --no-install-recommends libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 libglib2.0-dev pkg-config libfontconfig1 libxss1"
 ]
 
 [phases.install]
