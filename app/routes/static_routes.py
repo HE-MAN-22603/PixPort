@@ -123,11 +123,16 @@ def serve_processed(filename):
         # Check if file exists and is a file
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
             logger.warning(f"Processed file not found: {filename} at path: {file_path}")
-            # Try to find a similar file with different processing suffix
+            # Try multiple fallback strategies
+            
+            # Strategy 1: Look for similar files with different processing suffixes
             try:
                 processed_files = os.listdir(processed_folder)
                 base_name = filename.split('.')[0].split('_')[0]  # Get base UUID
+                
+                # Look for files starting with the same UUID base
                 similar_files = [f for f in processed_files if f.startswith(base_name) and f != filename]
+                
                 if similar_files:
                     logger.info(f"Found similar files for {filename}: {similar_files}")
                     # Use the most recent similar file
@@ -136,8 +141,41 @@ def serve_processed(filename):
                     logger.info(f"Redirecting to similar file: {newest_file}")
                     from flask import redirect, url_for
                     return redirect(url_for('static_files.serve_processed', filename=newest_file))
+                
+                # Strategy 2: Look for files with partial UUID match (handle truncated UUIDs)
+                if len(base_name) < 36:  # UUID should be 36 chars with dashes
+                    logger.info(f"Detected potentially truncated UUID: {base_name}")
+                    partial_matches = [f for f in processed_files 
+                                     if f.startswith(base_name[:8])  # First 8 chars
+                                     and f != filename]
+                    
+                    if partial_matches:
+                        logger.info(f"Found partial UUID matches: {partial_matches}")
+                        newest_file = max(partial_matches, key=lambda x: os.path.getmtime(
+                            os.path.join(processed_folder, x)))
+                        logger.info(f"Redirecting to partial match: {newest_file}")
+                        from flask import redirect, url_for
+                        return redirect(url_for('static_files.serve_processed', filename=newest_file))
+                
+                # Strategy 3: Look for any files with similar timestamps or names
+                name_part = filename.split('_')[1] if '_' in filename else None
+                if name_part:
+                    name_matches = [f for f in processed_files 
+                                  if name_part in f and f != filename]
+                    if name_matches:
+                        logger.info(f"Found name-based matches: {name_matches}")
+                        newest_file = max(name_matches, key=lambda x: os.path.getmtime(
+                            os.path.join(processed_folder, x)))
+                        logger.info(f"Redirecting to name-based match: {newest_file}")
+                        from flask import redirect, url_for
+                        return redirect(url_for('static_files.serve_processed', filename=newest_file))
+                        
             except Exception as e:
                 logger.error(f"Error looking for similar files: {str(e)}")
+            
+            # Log the missing file for debugging
+            logger.error(f"No fallback found for missing file: {filename}")
+            logger.error(f"Available files in processed folder: {os.listdir(processed_folder) if os.path.exists(processed_folder) else 'Folder does not exist'}")
             abort(404)
         
         # Check file size

@@ -62,6 +62,9 @@ function initializeResultPage() {
     // Get filename from URL
     resultState.filename = getFilenameFromURL();
     
+    // Set up image error handling first
+    setupImageErrorHandling();
+    
     setupDownloadButtons();
     setupImageControls();
     setupComparisonMode();
@@ -75,6 +78,173 @@ function initializeResultPage() {
     document.dispatchEvent(new CustomEvent('resultPageReady', { 
         detail: { state: resultState } 
     }));
+}
+
+function setupImageErrorHandling() {
+    // Handle main result image errors
+    const resultImage = document.querySelector('.result-image, #resultImage');
+    if (resultImage) {
+        resultImage.addEventListener('error', function() {
+            console.error('Main result image failed to load:', this.src);
+            handleImageLoadError(this, 'main');
+        });
+        
+        resultImage.addEventListener('load', function() {
+            console.log('Main result image loaded successfully');
+            // Remove any error states
+            this.classList.remove('image-error');
+            const errorMessage = document.querySelector('.image-error-message');
+            if (errorMessage) errorMessage.remove();
+        });
+    }
+    
+    // Handle comparison images errors
+    const comparisonImages = document.querySelectorAll('.comparison-original, .comparison-processed');
+    comparisonImages.forEach(img => {
+        img.addEventListener('error', function() {
+            console.error('Comparison image failed to load:', this.src);
+            handleImageLoadError(this, 'comparison');
+        });
+    });
+}
+
+function handleImageLoadError(imgElement, type) {
+    const filename = resultState.filename;
+    
+    if (!filename) {
+        showImageErrorMessage(imgElement, 'No filename available');
+        return;
+    }
+    
+    console.log(`Attempting to find alternative for ${filename}`);
+    
+    // Try to find an alternative image
+    tryImageFallbacks(imgElement, filename, type);
+}
+
+async function tryImageFallbacks(imgElement, filename, type) {
+    const fallbackStrategies = [
+        // Strategy 1: Try with '_no_bg' suffix
+        () => {
+            const baseName = filename.split('.')[0].replace(/_.*$/, '');
+            const ext = filename.split('.').pop();
+            return `${baseName}_no_bg.${ext}`;
+        },
+        
+        // Strategy 2: Try with '_bg_light_blue' suffix
+        () => {
+            const baseName = filename.split('.')[0].replace(/_.*$/, '');
+            const ext = filename.split('.').pop();
+            return `${baseName}_bg_light_blue.${ext}`;
+        },
+        
+        // Strategy 3: Try with '_enhanced' suffix
+        () => {
+            const baseName = filename.split('.')[0].replace(/_.*$/, '');
+            const ext = filename.split('.').pop();
+            return `${baseName}_enhanced.${ext}`;
+        },
+        
+        // Strategy 4: Try original filename without any suffix
+        () => {
+            const baseName = filename.split('.')[0].split('_')[0];
+            const ext = filename.split('.').pop();
+            return `${baseName}_time.${ext}`;
+        }
+    ];
+    
+    for (let i = 0; i < fallbackStrategies.length; i++) {
+        try {
+            const fallbackFilename = fallbackStrategies[i]();
+            console.log(`Trying fallback ${i + 1}: ${fallbackFilename}`);
+            
+            const fallbackUrl = `/static/processed/${fallbackFilename}`;
+            const exists = await checkImageExists(fallbackUrl);
+            
+            if (exists) {
+                console.log(`Found fallback image: ${fallbackFilename}`);
+                imgElement.src = fallbackUrl;
+                
+                // Update the filename in state if this is the main image
+                if (type === 'main') {
+                    resultState.filename = fallbackFilename;
+                    // Update URL if needed
+                    const newUrl = `/result/${fallbackFilename}`;
+                    if (window.history && window.location.pathname !== newUrl) {
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                }
+                
+                showToast(`Image loaded successfully from alternative source`, 'success', 3000);
+                return true;
+            }
+        } catch (error) {
+            console.warn(`Fallback ${i + 1} failed:`, error);
+        }
+    }
+    
+    // All fallbacks failed
+    console.error('All image fallbacks failed for:', filename);
+    showImageErrorMessage(imgElement, 'Image not found. The file may have been deleted or moved.');
+    return false;
+}
+
+async function checkImageExists(url) {
+    try {
+        const response = await fetch(url, { 
+            method: 'HEAD',
+            cache: 'no-cache'
+        });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
+
+function showImageErrorMessage(imgElement, message) {
+    // Add error class to image
+    imgElement.classList.add('image-error');
+    
+    // Create or update error message
+    let errorMessage = imgElement.parentNode.querySelector('.image-error-message');
+    if (!errorMessage) {
+        errorMessage = document.createElement('div');
+        errorMessage.className = 'image-error-message';
+        imgElement.parentNode.insertBefore(errorMessage, imgElement.nextSibling);
+    }
+    
+    errorMessage.innerHTML = `
+        <div class="error-content">
+            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+            <h3>Image Load Error</h3>
+            <p>${escapeHtml(message)}</p>
+            <button class="retry-btn" onclick="retryImageLoad('${imgElement.id || imgElement.className}')">Try Again</button>
+            <button class="home-btn" onclick="window.location.href='/'">Upload New Image</button>
+        </div>
+    `;
+    
+    // Hide the broken image
+    imgElement.style.display = 'none';
+}
+
+function retryImageLoad(imageIdentifier) {
+    const imgElement = document.getElementById(imageIdentifier) || document.querySelector(`.${imageIdentifier}`);
+    if (imgElement) {
+        // Show image again
+        imgElement.style.display = '';
+        imgElement.classList.remove('image-error');
+        
+        // Remove error message
+        const errorMessage = imgElement.parentNode.querySelector('.image-error-message');
+        if (errorMessage) errorMessage.remove();
+        
+        // Force reload
+        const originalSrc = imgElement.src;
+        imgElement.src = '';
+        setTimeout(() => {
+            imgElement.src = originalSrc + '?retry=' + Date.now();
+        }, 100);
+    }
 }
 
 function getFilenameFromURL() {
