@@ -52,7 +52,7 @@ steps:
       - '--timeout'
       - '300s'
       - '--set-env-vars'
-      - 'FLASK_ENV=production,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use'
+      - 'FLASK_ENV=production,SECRET_KEY=pixport-cloud-run-secret-key-2024,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use'
       - '--execution-environment'
       - 'gen2'
     id: 'deploy-to-cloud-run'
