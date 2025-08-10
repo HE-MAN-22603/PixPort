@@ -7,6 +7,7 @@ Main Flask application entry point
 from app import create_app
 import os
 import logging
+from app.services.model_warmer import model_warmer
 
 # Configure logging for production
 if os.environ.get('RAILWAY_ENVIRONMENT_NAME'):

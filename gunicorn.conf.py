@@ -1,5 +1,5 @@
 """
-Gunicorn configuration for PixPort with memory optimization
+Gunicorn configuration for PixPort - Optimized for Google Cloud Run
 """
 
 import os
@@ -8,23 +8,26 @@ import multiprocessing
 # Server socket
 bind = f"0.0.0.0:{os.environ.get('PORT', 8080)}"
 
-# Worker processes - optimized for Railway memory constraints
-workers = 1  # Single worker to minimize memory usage
-worker_class = "sync"
-worker_connections = 5  # Very limited concurrent connections
+# Worker processes - optimized for Cloud Run
+workers = 2  # Increased for better concurrency
+worker_class = "gthread"  # Thread-based for better I/O handling
+threads = 4  # 4 threads per worker = 8 concurrent requests
+worker_connections = 1000  # Higher for Cloud Run
 
-# Worker timeout and aggressive recycling  
-timeout = 180  # 3 minutes for processing (reduced)
-keepalive = 2
-max_requests = 20  # Recycle worker after only 20 requests to prevent memory leaks
-max_requests_jitter = 3  # Add randomness to recycling
-worker_memory_limit = 400  # MB - restart worker if memory exceeds this
+# Timeouts optimized for AI processing
+timeout = 300  # 5 minutes for AI model processing
+keepalive = 5  # Keep connections alive longer
+graceful_timeout = 30  # Graceful shutdown time
 
-# Preload app for better memory sharing
+# Worker recycling for memory management
+max_requests = 100  # Increased for better performance
+max_requests_jitter = 10
+
+# Preload app for faster cold starts
 preload_app = True
 
-# Memory management
-worker_tmp_dir = "/dev/shm" if os.path.exists("/dev/shm") else None  # Use RAM disk if available
+# Performance optimizations
+worker_tmp_dir = "/dev/shm" if os.path.exists("/dev/shm") else None
 
 # Logging
 loglevel = "info"
