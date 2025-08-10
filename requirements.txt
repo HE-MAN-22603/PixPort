@@ -1,6 +1,6 @@
-# PixPort - Railway-Optimized Requirements
-# Supports both main app and ISNet Tiny background removal service
-# Target: <512MB memory usage for Railway deployment
+# PixPort - Google Cloud Run Requirements
+# Optimized for Flask deployment on Cloud Run with 2GB memory limit
+# Python 3.11.9 compatible
 
 # ===== Core Web Framework =====
 Flask>=2.3.3,<4.0.0
@@ -12,15 +12,15 @@ gunicorn>=21.2.0
 Pillow>=10.0.0,<11.0.0
 numpy>=1.24.3,<1.26.0
 
-# ===== Background Removal - Railway Optimized =====
-# Primary: ONNX Runtime (CPU only for memory efficiency)
+# ===== Background Removal - Cloud Run Optimized =====
+# ONNX Runtime (CPU optimized for Cloud Run)
 onnxruntime>=1.15.1,<1.17.0
 
-# Optional: rembg for model access (can be commented out if models are pre-downloaded)
+# rembg for AI model management
 rembg>=2.0.60,<3.0.0
 
-# ===== Computer Vision (Lightweight) =====
-# OpenCV headless version for face detection
+# ===== Computer Vision =====
+# OpenCV headless version for image processing
 opencv-python-headless>=4.8.0.76,<4.9.0
 
 # ===== System and Monitoring =====
@@ -28,51 +28,35 @@ psutil>=5.9.0,<6.0.0
 requests>=2.28.0,<3.0.0
 python-dotenv>=1.0.0,<2.0.0
 
-# ===== Production Deployment =====
-# Keep gunicorn for production WSGI server
-# Note: Railway can also use the built-in Flask server for lighter deployments
+# ===== Production Web Server =====
+# Gunicorn for production WSGI server on Cloud Run
 
-# ===== Optional/Heavy Packages (Commented for Railway Memory Limits) =====
-# Uncomment only if needed and memory allows
+# ===== Optional Packages (Cloud Run has 2GB memory limit) =====
+# Uncomment if needed - Cloud Run can handle these better than Railway
 
-# Redis for caching (adds ~20MB)
+# Redis for caching
 # redis>=4.5.0
 
-# PDF generation (adds ~50MB)
+# PDF generation
 # reportlab>=4.0.0
 
-# Full ONNX toolkit (adds ~100MB)
+# Advanced ONNX features
 # onnx>=1.14.0
 
-# TensorFlow/PyTorch (adds 500MB+) - NOT RECOMMENDED for Railway
-# tensorflow>=2.13.0
-# torch>=2.0.0
-
-# Alternative background removal services
-# transformers>=4.21.0  # Adds ~200MB
-# torch>=2.0.0  # Adds ~800MB
-
-# ===== Development/Testing (Comment out for production) =====
-# Uncomment for local development
-# pytest>=7.0.0
-# black>=23.0.0
-# flake8>=6.0.0
-# coverage>=7.0.0
-
-# ===== Memory Usage Estimates =====
+# ===== Memory Usage Estimates for Cloud Run =====
 # Flask + dependencies: ~25MB
 # Pillow: ~15MB
 # NumPy: ~20MB
 # ONNX Runtime: ~40MB
 # OpenCV (headless): ~30MB
 # rembg + dependencies: ~50MB
-# ISNet model: ~40MB
-# Working memory: ~60MB
-# Total estimated: ~280MB (55% of Railway's 512MB limit)
+# AI models: ~100MB (multiple models supported)
+# Working memory: ~200MB
+# Total estimated: ~480MB (24% of Cloud Run's 2GB limit)
 
-# ===== Railway Deployment Notes =====
-# 1. Keep total memory under 400MB for safety margin
-# 2. ISNet Tiny service uses only ~235MB peak
-# 3. Main app with fallbacks uses ~350MB peak
-# 4. Use environment variables to disable heavy features if needed
-# 5. Monitor memory with /api/bg/health endpoint
+# ===== Cloud Run Deployment Benefits =====
+# 1. 2GB memory limit (4x more than Railway's 512MB)
+# 2. Better CPU allocation and performance
+# 3. Automatic scaling based on traffic
+# 4. Native Google Cloud integration
+# 5. Support for larger AI models and processing

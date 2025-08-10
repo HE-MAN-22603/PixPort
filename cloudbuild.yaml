@@ -1,0 +1,90 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:$COMMIT_SHA'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:latest'
+      - '.'
+    id: 'build-image'
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:$COMMIT_SHA'
+    id: 'push-image-sha'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:latest'
+    id: 'push-image-latest'
+    waitFor: ['build-image']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'my-flask-service'
+      - '--image'
+      - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:$COMMIT_SHA'
+      - '--region'
+      - 'europe-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '2Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--concurrency'
+      - '80'
+      - '--timeout'
+      - '300s'
+      - '--set-env-vars'
+      - 'FLASK_ENV=production,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use'
+      - '--execution-environment'
+      - 'gen2'
+    id: 'deploy-to-cloud-run'
+    waitFor: ['push-image-sha', 'push-image-latest']
+
+# Build options for optimization
+options:
+  # Use high-performance machine for faster builds
+  machineType: 'E2_HIGHCPU_8'
+  
+  # Enable Docker layer caching for faster subsequent builds
+  substitutionOption: 'ALLOW_LOOSE'
+  
+  # Log streaming for real-time feedback
+  logging: 'CLOUD_LOGGING_ONLY'
+
+# Substitutions (can be overridden)
+substitutions:
+  _REGION: 'europe-west1'
+  _PROJECT_ID: 'my-gcp-project-id'
+  _REPO_NAME: 'my-artifact-repo'
+  _SERVICE_NAME: 'my-flask-service'
+
+# Build timeout (increased for first builds with model downloads)
+timeout: '1800s'  # 30 minutes
+
+# Images to be pushed to registry
+images:
+  - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:$COMMIT_SHA'
+  - 'europe-west1-docker.pkg.dev/my-gcp-project-id/my-artifact-repo/my-flask-service:latest'
+
+# Tags for the build
+tags:
+  - 'pixport-flask-app'
+  - 'cloud-run-deployment'

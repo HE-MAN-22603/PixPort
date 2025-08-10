@@ -1,0 +1,143 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development files
+tests/
+test_*.py
+*_test.py
+debug_*.py
+dev_*.py
+start_dev.bat
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Local development
+.env.local
+.env.development
+.env.test
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+build.sh
+*.tar.gz
+*.zip
+
+# Model files (will be downloaded at runtime)
+models/
+*.pth
+*.onnx
+*.pb
+
+# Large datasets
+data/
+dataset/
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Cloud specific
+.gcloudignore
+cloudbuild.yaml
+docker-compose.yml
+
+# Railway files (removed)
+Procfile
+railway.*
+nixpacks.toml
+runtime.txt
+requirements-railway.txt
+
+# Previous deployment configs
+Dockerfile.*
+!Dockerfile
