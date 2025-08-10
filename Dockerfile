@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libfontconfig1 \
     libxss1 \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -52,7 +53,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8080/api/bg/health', timeout=5)"
+    CMD curl -f http://localhost:8080/ || exit 1
 
 # Run with Gunicorn using optimized configuration for Cloud Run
 CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 --preload --max-requests 1000 --max-requests-jitter 50 app:app
