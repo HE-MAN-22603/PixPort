@@ -4,8 +4,6 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:$COMMIT_SHA'
-      - '-t'
       - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:latest'
       - '.'
     id: 'build-image'
@@ -14,15 +12,8 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:$COMMIT_SHA'
-    id: 'push-image-sha'
-    waitFor: ['build-image']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
       - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:latest'
-    id: 'push-image-latest'
+    id: 'push-image'
     waitFor: ['build-image']
 
   # Deploy container image to Cloud Run
@@ -33,7 +24,7 @@ steps:
       - 'deploy'
       - 'pixport-app'
       - '--image'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:latest'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -46,7 +37,7 @@ steps:
       - '--cpu'
       - '2'
       - '--max-instances'
-      - '10'
+      - '5'
       - '--concurrency'
       - '80'
       - '--timeout'
@@ -56,7 +47,7 @@ steps:
       - '--execution-environment'
       - 'gen2'
     id: 'deploy-to-cloud-run'
-    waitFor: ['push-image-sha', 'push-image-latest']
+    waitFor: ['push-image']
 
 # Build options for optimization
 options:
@@ -81,7 +72,6 @@ timeout: '1800s'  # 30 minutes
 
 # Images to be pushed to registry
 images:
-  - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:$COMMIT_SHA'
   - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-app:latest'
 
 # Tags for the build
