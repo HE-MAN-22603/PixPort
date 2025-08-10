@@ -60,8 +60,8 @@ steps:
 
 # Build options for optimization
 options:
-  # Use high-performance machine for faster builds
-  machineType: 'E2_HIGHCPU_8'
+  # Use default machine (no quota issues)
+  # machineType: removed to use default
   
   # Enable Docker layer caching for faster subsequent builds
   substitutionOption: 'ALLOW_LOOSE'
