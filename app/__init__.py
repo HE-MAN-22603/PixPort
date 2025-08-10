@@ -119,11 +119,20 @@ def create_app():
     app.register_blueprint(process_bp, url_prefix='/process')
     app.register_blueprint(health_bp)
     app.register_blueprint(print_bp, url_prefix='/print')
-    app.register_blueprint(static_bp)
+    app.register_blueprint(static_bp, url_prefix='/static')  # Add /static prefix
     app.register_blueprint(model_status_bp)
     
-    # Ensure upload directories exist
+    # Ensure upload directories exist and log configuration for debugging
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['PROCESSED_FOLDER'], exist_ok=True)
+    
+    # Log configuration for Railway debugging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Railway Environment: {os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'Not detected')}")
+    logger.info(f"Upload Folder: {app.config['UPLOAD_FOLDER']}")
+    logger.info(f"Processed Folder: {app.config['PROCESSED_FOLDER']}")
+    logger.info(f"Upload folder exists: {os.path.exists(app.config['UPLOAD_FOLDER'])}")
+    logger.info(f"Processed folder exists: {os.path.exists(app.config['PROCESSED_FOLDER'])}")
     
     return app

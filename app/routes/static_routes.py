@@ -57,9 +57,13 @@ def serve_upload(filename):
             logger.warning(f"Invalid filename requested: {filename} from IP: {request.remote_addr}")
             abort(400)  # Bad Request instead of 404 to indicate invalid request
         
-        # Construct safe path
+        # Get upload folder from config (handles both development and Railway)
         upload_folder = current_app.config['UPLOAD_FOLDER']
         file_path = os.path.join(upload_folder, filename)
+        
+        logger.info(f"Attempting to serve upload file: {filename} from path: {file_path}")
+        logger.info(f"Upload folder configured as: {upload_folder}")
+        logger.info(f"File exists: {os.path.exists(file_path)}")
         
         # Ensure the file is within the upload directory (prevent path traversal)
         if not os.path.abspath(file_path).startswith(os.path.abspath(upload_folder)):
@@ -69,6 +73,15 @@ def serve_upload(filename):
         # Check if file exists and is a file (not directory)
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
             logger.warning(f"Upload file not found: {filename} at path: {file_path}")
+            # List available files for debugging
+            try:
+                if os.path.exists(upload_folder):
+                    available_files = os.listdir(upload_folder)
+                    logger.info(f"Available files in upload folder: {available_files}")
+                else:
+                    logger.error(f"Upload folder does not exist: {upload_folder}")
+            except Exception as e:
+                logger.error(f"Error listing upload folder contents: {str(e)}")
             abort(404)
         
         # Check file size (prevent serving huge files)
@@ -114,6 +127,10 @@ def serve_processed(filename):
         # Construct safe path
         processed_folder = current_app.config['PROCESSED_FOLDER']
         file_path = os.path.join(processed_folder, filename)
+        
+        logger.info(f"Attempting to serve processed file: {filename} from path: {file_path}")
+        logger.info(f"Processed folder configured as: {processed_folder}")
+        logger.info(f"File exists: {os.path.exists(file_path)}")
         
         # Ensure the file is within the processed directory
         if not os.path.abspath(file_path).startswith(os.path.abspath(processed_folder)):
