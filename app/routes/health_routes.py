@@ -6,31 +6,16 @@ from flask import Blueprint, jsonify
 import psutil
 import os
 from ..services.model_manager import model_manager
-from ..services.model_warmer import get_warming_status
 
 health_bp = Blueprint('health', __name__)
 
 @health_bp.route('/health')
 def health_check():
-    """Enhanced health check with model warming status"""
-    try:
-        warming_status = get_warming_status()
-        models_ready = any(status == 'ready' for status in warming_status.values())
-        
-        return jsonify({
-            'status': 'healthy',
-            'models_ready': models_ready,
-            'model_warming': warming_status,
-            'environment': os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'development'),
-            'cold_start_optimized': True
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'healthy',
-            'models_ready': False,
-            'error': str(e),
-            'environment': os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'development')
-        })
+    """Basic health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'environment': os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'development')
+    })
 
 @health_bp.route('/memory')  
 def memory_status():
