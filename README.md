@@ -598,3 +598,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Made with ❤️ for passport photos worldwide**
+#   G o o g l e   C l o u d   R u n   D e p l o y m e n t   R e a d y !   T e s t   d e p l o y m e n t   0 8 / 1 0 / 2 0 2 5   2 3 : 0 7 : 0 2  
+ 
