@@ -376,12 +376,41 @@ processing_cache/
 railway_temp/
 minimal_bg_temp/
 
+# ISNet Tiny Service Files
+test_isnet_tiny.py
+isnet_test_*.png
+isnet_test_*.jpg
+isnet_tiny_*.png
+test_outputs/
+*_nobg.png
+*_colored.jpg
+*_colored.png
+temp_nobg_*.png
+
+# ISNet Tiny specific model cache
+isnet-general-tiny.onnx
+isnet-general-use.onnx
+.isnet_cache/
+isnet_cache/
+.isnet-tiny/
+~/.isnet-tiny/
+
+# Railway background removal service
+railway_bg_service/
+app/services/__pycache__/
+app/api/__pycache__/
+
 # New service test files
 test_railway_bg.py
 railway_test_*.png
 railway_test_*.jpg
 minimal_test_*.png
 model_status_test.json
+
+# Alternative deployment files
+app_isnet_tiny.py.bak
+requirements-isnet-tiny.txt.bak
+Dockerfile.isnet-tiny.bak
 
 # Gunicorn specific
 gunicorn.log
@@ -438,7 +467,15 @@ dist/
 *_old.*
 backups/
 
-#UNWANTED FILES
+# Keep important project files
+!README-isnet-tiny.md
+!requirements-isnet-tiny.txt
+!Dockerfile.isnet-tiny
+!app_isnet_tiny.py
+!test_isnet_tiny.py
+
+# Remove unwanted generated documentation
 IMPLEMENTATION_SUMMARY.md
 RAILWAY_DEPLOY_GUIDE.md
 .gitignore_UPDATES.md
+CONVERSATION_SUMMARY.md

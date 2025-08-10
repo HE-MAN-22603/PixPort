@@ -1,0 +1,37 @@
+# Ultra-Lightweight Background Removal Service Requirements
+# Optimized for Railway 512MB deployment - uses ONLY isnet-general-tiny
+
+# Core web framework
+Flask>=2.0.0,<3.0.0
+
+# Image processing - essential for PIL/Pillow operations
+Pillow>=9.0.0,<11.0.0
+
+# ONNX Runtime - CPU only for memory efficiency
+onnxruntime>=1.15.0,<1.17.0
+
+# NumPy - required for array operations (dependency of onnxruntime anyway)
+numpy>=1.21.0,<1.26.0
+
+# System monitoring (optional but helpful for Railway)
+psutil>=5.8.0,<6.0.0
+
+# Optional: rembg for model access (can be removed if model is pre-downloaded)
+# rembg>=2.0.50,<3.0.0
+
+# Development/debugging (remove for production to save space)
+# Werkzeug>=2.0.0  # Already included with Flask
+
+# Note: CUDA/GPU dependencies are intentionally excluded for Railway deployment
+# Note: Other ML libraries like torch, tensorflow are intentionally excluded
+# Note: This keeps the container size and memory usage minimal
+
+# Total estimated memory usage:
+# - Base Python runtime: ~50MB  
+# - Flask + dependencies: ~20MB
+# - ONNX Runtime CPU: ~40MB
+# - ISNet model: ~40MB
+# - PIL/Pillow: ~15MB
+# - NumPy: ~20MB
+# - Working memory for processing: ~50MB
+# = Total: ~235MB (well under Railway's 512MB limit)
