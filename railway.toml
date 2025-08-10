@@ -19,8 +19,8 @@ MALLOC_TRIM_THRESHOLD_ = "131072"
 
 [deploy]
 # Deployment configuration
-healthcheckPath = "/api/bg/health"
-healthcheckTimeout = 300
+#healthcheckPath = "/api/bg/health"
+#healthcheckTimeout = 300
 # Default: Full PixPort app with gunicorn
 startCommand = "gunicorn -c gunicorn.conf.py wsgi:app"
 # Alternative: ISNet Tiny service (uncomment to use)
