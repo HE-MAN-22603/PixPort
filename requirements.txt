@@ -1,6 +1,9 @@
-# PixPort - Google Cloud Run Requirements
-# Optimized for Flask deployment on Cloud Run with 2GB memory limit
+# ========================================
+# 🚀 PIXPORT - OPTIMIZED CLOUD RUN REQUIREMENTS
+# ========================================
+# Optimized for Google Cloud Run with 2GB memory limit
 # Python 3.11.9 compatible
+# Includes all dependencies for fast cold starts
 
 # ===== Core Web Framework =====
 Flask>=2.3.3,<4.0.0

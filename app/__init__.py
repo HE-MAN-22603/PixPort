@@ -4,7 +4,8 @@ PixPort Flask Application Factory
 
 import os
 import time
-from flask import Flask, jsonify
+from datetime import datetime, timedelta
+from flask import Flask, jsonify, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from .config import Config
@@ -72,6 +73,26 @@ def create_app():
     
     # Setup custom middleware
     setup_middleware(app)
+    
+    # Add static file caching for Cloud Run optimization
+    @app.after_request
+    def add_cache_headers(response):
+        """Add appropriate cache headers for static files and API responses"""
+        # Cache static files for 1 year (they have versioned URLs)
+        if request.endpoint == 'static':
+            response.cache_control.public = True
+            response.cache_control.max_age = 31536000  # 1 year
+            response.headers['Expires'] = (datetime.now() + timedelta(days=365)).strftime('%a, %d %b %Y %H:%M:%S GMT')
+        # Cache API responses briefly
+        elif request.path.startswith('/api/'):
+            response.cache_control.no_cache = True
+            response.cache_control.must_revalidate = True
+        # Cache health checks for 30 seconds
+        elif request.path in ['/health', '/ready', '/warmup']:
+            response.cache_control.public = True
+            response.cache_control.max_age = 30
+        
+        return response
     
     # Add cache busting template context
     @app.context_processor

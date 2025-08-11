@@ -1,21 +1,103 @@
 """
-Health and monitoring routes
+Health and monitoring routes optimized for Google Cloud Run
 """
 
 from flask import Blueprint, jsonify
 import psutil
 import os
+import time
 from ..services.model_manager import model_manager
 
 health_bp = Blueprint('health', __name__)
 
 @health_bp.route('/health')
 def health_check():
-    """Basic health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'environment': os.environ.get('RAILWAY_ENVIRONMENT_NAME', 'development')
-    })
+    """Cloud Run health check endpoint - must respond quickly"""
+    try:
+        # Quick health check for Cloud Run
+        environment = 'cloud-run' if os.environ.get('K_SERVICE') else \
+                     'railway' if os.environ.get('RAILWAY_ENVIRONMENT_NAME') else \
+                     'development'
+        
+        return jsonify({
+            'status': 'healthy',
+            'environment': environment,
+            'timestamp': time.time()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
+
+@health_bp.route('/warmup', methods=['GET', 'POST'])
+def warmup():
+    """
+    Warmup endpoint for Cloud Run - runs dummy AI inference
+    This endpoint makes the first real user request much faster
+    """
+    try:
+        from model_utils import model_manager as optimized_manager
+        
+        # Check if model is ready
+        if not optimized_manager.is_ready():
+            return jsonify({
+                'status': 'warming',
+                'message': 'Model not ready yet'
+            }), 202
+        
+        # Check if already warmed up
+        if optimized_manager.is_warmed_up():
+            return jsonify({
+                'status': 'ready',
+                'message': 'Model already warmed up',
+                'model_ready': True,
+                'warmup_complete': True
+            })
+        
+        # Model is ready but not warmed up yet - warmup happens in background
+        # Just return success since warmup runs async
+        return jsonify({
+            'status': 'warming',
+            'message': 'Warmup in progress',
+            'model_ready': True,
+            'warmup_complete': False
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@health_bp.route('/ready')
+def readiness_check():
+    """Cloud Run readiness probe - checks if AI model is loaded"""
+    try:
+        from model_utils import model_manager as optimized_manager
+        
+        model_ready = optimized_manager.is_ready()
+        warmup_complete = optimized_manager.is_warmed_up()
+        
+        if model_ready:
+            return jsonify({
+                'status': 'ready',
+                'model_ready': model_ready,
+                'warmup_complete': warmup_complete,
+                'performance_tip': 'First request will be fast!' if warmup_complete else 'First request may be slower'
+            })
+        else:
+            return jsonify({
+                'status': 'not_ready',
+                'model_ready': False,
+                'message': 'AI model not loaded'
+            }), 503
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
 @health_bp.route('/memory')  
 def memory_status():

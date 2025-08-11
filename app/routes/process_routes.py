@@ -4,6 +4,7 @@ Image processing routes for PixPort
 
 import os
 import uuid
+import time
 from flask import Blueprint, request, jsonify, current_app, redirect, url_for
 from werkzeug.utils import secure_filename
 from flask_limiter import Limiter
@@ -15,6 +16,14 @@ from ..services.enhancer import enhance_image
 from ..services.photo_resizer import resize_to_passport
 from ..services.utils import allowed_file, save_uploaded_file, validate_image_file
 from ..services.model_manager import model_manager
+
+# Import optimized model manager for Cloud Run
+try:
+    from model_utils import model_manager as optimized_model_manager
+    OPTIMIZED_MODELS_AVAILABLE = True
+except ImportError:
+    OPTIMIZED_MODELS_AVAILABLE = False
+    optimized_model_manager = None
 
 process_bp = Blueprint('process', __name__)
 
@@ -549,4 +558,176 @@ def professional(filename):
         return jsonify({
             'error': 'Professional processing failed',
             'message': str(e)
+        }), 500
+
+# ==========================================
+# 🚀 OPTIMIZED ROUTES FOR CLOUD RUN
+# ==========================================
+
+@process_bp.route('/remove_background_optimized/<filename>', methods=['POST'])
+@limiter.limit("10 per minute")  # Higher limit since it's faster
+def remove_bg_optimized(filename):
+    """
+    Optimized background removal using preloaded models
+    Much faster than the standard route - no model loading delay
+    """
+    if not OPTIMIZED_MODELS_AVAILABLE:
+        # Fallback to standard route
+        return remove_bg(filename)
+    
+    # Validate filename
+    valid, msg = validate_filename_parameter(filename)
+    if not valid:
+        return jsonify({'error': msg}), 400
+    
+    # Find input file
+    input_path = find_input_file(filename, current_app.config)
+    if not input_path:
+        return jsonify({'error': 'File not found'}), 404
+    
+    try:
+        # Check if optimized model is ready
+        if not optimized_model_manager.is_ready():
+            current_app.logger.warning("Optimized model not ready, falling back to standard processing")
+            return remove_bg(filename)
+        
+        # Generate output filename
+        name, ext = os.path.splitext(filename)
+        output_filename = f"{name}_no_bg_fast{ext}"
+        output_path = os.path.join(current_app.config['PROCESSED_FOLDER'], output_filename)
+        
+        # Use optimized model manager
+        success = optimized_model_manager.remove_background(input_path, output_path)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'output_filename': output_filename,
+                'message': 'Background removed successfully (optimized)',
+                'processing_method': 'optimized',
+                'preview_url': url_for('static', filename='processed/' + output_filename)
+            }), 200
+        else:
+            # Fallback to standard processing
+            current_app.logger.warning("Optimized processing failed, falling back to standard")
+            return remove_bg(filename)
+            
+    except Exception as e:
+        current_app.logger.error(f"Optimized background removal failed: {e}")
+        # Fallback to standard processing
+        return remove_bg(filename)
+
+@process_bp.route('/change_background_optimized/<filename>', methods=['POST'])
+@limiter.limit("8 per minute")  # Higher limit since it's faster
+def change_bg_optimized(filename):
+    """
+    Optimized background color change using preloaded models
+    Combines background removal and color application in one optimized step
+    """
+    if not OPTIMIZED_MODELS_AVAILABLE:
+        # Fallback to standard route
+        return change_bg(filename)
+    
+    data = request.get_json() or {}
+    color = data.get('color', 'white')
+    
+    # Validate filename
+    valid, msg = validate_filename_parameter(filename)
+    if not valid:
+        return jsonify({'error': msg}), 400
+    
+    # Find input file
+    input_path = find_input_file(filename, current_app.config)
+    if not input_path:
+        return jsonify({'error': 'File not found'}), 404
+    
+    # Parse and validate color
+    try:
+        if color in current_app.config['BACKGROUND_COLORS']:
+            rgb_color = current_app.config['BACKGROUND_COLORS'][color]
+        elif color.startswith('#') and len(color) == 7:
+            hex_color = color[1:]
+            if all(c in '0123456789ABCDEFabcdef' for c in hex_color):
+                rgb_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            else:
+                raise ValueError("Invalid hex color")
+        else:
+            return jsonify({
+                'error': 'Invalid color format',
+                'message': 'Color must be a predefined name or hex format (#RRGGBB)',
+                'available_colors': list(current_app.config['BACKGROUND_COLORS'].keys())
+            }), 400
+    except Exception as color_error:
+        return jsonify({
+            'error': 'Color parsing failed',
+            'message': str(color_error)
+        }), 400
+    
+    try:
+        # Check if optimized model is ready
+        if not optimized_model_manager.is_ready():
+            current_app.logger.warning("Optimized model not ready, falling back to standard processing")
+            return change_bg(filename)
+        
+        # Generate output filename
+        name, ext = os.path.splitext(filename)
+        if color.startswith('#'):
+            color_name = f"hex_{color[1:]}"
+        else:
+            color_name = color
+        output_filename = f"{name}_bg_{color_name}_fast{ext}"
+        output_path = os.path.join(current_app.config['PROCESSED_FOLDER'], output_filename)
+        
+        # Use optimized model manager - single operation
+        success = optimized_model_manager.change_background_color(input_path, output_path, rgb_color)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'output_filename': output_filename,
+                'message': f'Background changed to {color} (optimized)',
+                'processing_method': 'optimized_single_step',
+                'color_applied': color,
+                'rgb_values': rgb_color,
+                'preview_url': url_for('static', filename='processed/' + output_filename)
+            }), 200
+        else:
+            # Fallback to standard processing
+            current_app.logger.warning("Optimized processing failed, falling back to standard")
+            return change_bg(filename)
+            
+    except Exception as e:
+        current_app.logger.error(f"Optimized background change failed: {e}")
+        # Fallback to standard processing
+        return change_bg(filename)
+
+@process_bp.route('/model_status')
+def model_status():
+    """
+    Get status of AI models - useful for debugging and monitoring
+    """
+    try:
+        status = {
+            'optimized_models_available': OPTIMIZED_MODELS_AVAILABLE,
+            'standard_model_manager': 'available',
+            'timestamp': time.time()
+        }
+        
+        if OPTIMIZED_MODELS_AVAILABLE:
+            optimized_status = optimized_model_manager.get_status()
+            status['optimized_model'] = optimized_status
+        
+        # Get standard model manager status
+        try:
+            standard_status = model_manager.get_memory_info()
+            status['standard_model'] = standard_status
+        except Exception as e:
+            status['standard_model'] = {'error': str(e)}
+        
+        return jsonify(status)
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'timestamp': time.time()
         }), 500
