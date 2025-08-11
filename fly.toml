@@ -1,0 +1,73 @@
+# Fly.io configuration for PixPort with isnet-general-use model
+# Optimized for FREE PLAN (256MB shared-cpu-1x)
+
+app = 'pixport-bg-remover'
+primary_region = 'bom'  # Mumbai - closest to India
+
+[build]
+
+[env]
+  # Force isnet-general-use model for optimal memory usage
+  REMBG_MODEL = "isnet-general-use"
+  
+  # Fly.io deployment settings
+  FLY_DEPLOYMENT = "true"
+  
+  # Memory optimization settings
+  MEMORY_CONSTRAINED = "true"
+  
+  # Flask settings for production
+  FLASK_ENV = "production"
+  FLASK_DEBUG = "false"
+  
+  # File upload limits for free plan
+  MAX_CONTENT_LENGTH = "8388608"  # 8MB limit
+  
+  # Model download timeout
+  MODEL_DOWNLOAD_TIMEOUT = "300"  # 5 minutes
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0  # Scale to zero when not in use (FREE PLAN)
+  processes = ['app']
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "10s"
+    path = "/health"
+
+# FREE PLAN Configuration - shared-cpu-1x with 256MB
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+  
+# Auto-scaling for free plan
+[scaling]
+  min_count = 0  # Scale to zero
+  max_count = 1  # Only 1 instance on free plan
+
+# Health checks
+[checks]
+  [checks.health]
+    port = 5000
+    type = "http"
+    path = "/health"
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "30s"
+
+# Restart policy
+[restart]
+  policy = "on-failure"
+  max_retries = 3
+
+# Metrics (optional)
+[metrics]
+  port = 9091
+  path = "/metrics"

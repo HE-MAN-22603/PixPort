@@ -24,8 +24,14 @@ logger = logging.getLogger(__name__)
 # Detect deployment environment
 is_cloud_run = os.environ.get('K_SERVICE') is not None
 is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+is_flyio = os.environ.get('FLY_APP_NAME') is not None or os.environ.get('FLY_DEPLOYMENT') is not None
 
-if is_cloud_run:
+if is_flyio:
+    logger.info('🪂 Starting PixPort on Fly.io')
+    # Force isnet-general-use for Fly.io free plan
+    os.environ.setdefault('REMBG_MODEL', 'isnet-general-use')
+    os.environ.setdefault('MEMORY_CONSTRAINED', 'true')
+elif is_cloud_run:
     logger.info('🚀 Starting PixPort on Google Cloud Run')
 elif is_railway:
     logger.info('🚄 Starting PixPort on Railway')

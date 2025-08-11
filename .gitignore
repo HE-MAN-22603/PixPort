@@ -387,46 +387,30 @@ processing_cache/
 railway_temp/
 minimal_bg_temp/
 
-# ISNet Tiny Service Files
-test_isnet_tiny.py
-isnet_test_*.png
-isnet_test_*.jpg
-isnet_tiny_*.png
-test_outputs/
-*_nobg.png
-*_colored.jpg
-*_colored.png
-temp_nobg_*.png
+# Test files and development artifacts
+test_*.py
+*_test.py
+test_output*/
+test_results/
+temp_test*/
 
-# ISNet Tiny specific model cache
-isnet-general-tiny.onnx
-isnet-general-use.onnx
-.isnet_cache/
-isnet_cache/
-.isnet-tiny/
-~/.isnet-tiny/
+# Development documentation (outdated)
+*.md
+!README.md
+!README-*.md
 
-# Railway background removal service
-railway_bg_service/
-app/services/__pycache__/
-app/api/__pycache__/
+# Backup and temporary files
+*.bak
+*.backup
+*_backup.*
+*_old.*
+backups/
+temp_*/
 
-# New service test files
-test_railway_bg.py
-railway_test_*.png
-railway_test_*.jpg
-minimal_test_*.png
-model_status_test.json
-
-# Alternative deployment files
-app_isnet_tiny.py.bak
-requirements-isnet-tiny.txt.bak
-Dockerfile.isnet-tiny.bak
-
-# Gunicorn specific
-gunicorn.log
-gunicorn.error.log
-worker_*.log
+# Build artifacts
+build/
+dist/
+*.whl
 
 # Production secrets
 production.env
@@ -434,59 +418,9 @@ production.env
 .env.prod
 secret_key.txt
 
-# Documentation Directory
-# Keep docs directory and all documentation files
-!docs/
-!docs/*.md
-
-# Scripts Directory
-# Keep scripts directory and Python files
-!scripts/
-!scripts/*.py
-!scripts/*.sh
-!scripts/*.bat
-scripts/__pycache__/
-scripts/*.pyc
-scripts/temp_*
-scripts/*.log
-
-# Tests Directory Content (exclude test outputs but keep structure)
-tests/__pycache__/
-tests/*.pyc
-tests/sample_*
-tests/test_output/
-tests/temp_*
-tests/*.log
-tests/results/
-# Keep tests directory structure and source files
-!tests/
-!tests/__init__.py
-!tests/README.md
-!tests/*.py
-!tests/*.bat
-!tests/*.sh
-
-# Build artifacts
-build/
-dist/
-*.whl
-
-# Backup files
-*.bak
-*.backup
-*_backup.*
-*_old.*
-backups/
-
-# Keep important project files
-!README-isnet-tiny.md
-!requirements-isnet-tiny.txt
-!Dockerfile.isnet-tiny
-!app_isnet_tiny.py
-!test_isnet_tiny.py
-
-# Remove unwanted generated documentation
-IMPLEMENTATION_SUMMARY.md
-RAILWAY_DEPLOY_GUIDE.md
-.gitignore_UPDATES.md
-CONVERSATION_SUMMARY.md
+# Logs and monitoring
+*.log
+logs/
+gunicorn.log
+gunicorn.error.log
+worker_*.log

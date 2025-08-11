@@ -1,0 +1,51 @@
+# ========================================
+# 🚀 PIXPORT - FLY.IO OPTIMIZED REQUIREMENTS  
+# ========================================
+# Optimized for FREE PLAN (256MB memory limit)
+# Uses isnet-general-use model for best balance
+# Python 3.11 compatible
+
+# ===== Core Web Framework =====
+Flask>=2.3.3,<4.0.0
+Werkzeug>=2.3.7,<3.0.0
+gunicorn>=21.2.0,<22.0.0
+
+# ===== Image Processing (Essential) =====
+Pillow>=10.0.0,<11.0.0
+numpy>=1.24.3,<1.26.0
+
+# ===== Background Removal - Fly.io Optimized =====
+# ONNX Runtime (CPU optimized for memory efficiency)
+onnxruntime>=1.15.1,<1.17.0
+
+# rembg for AI model management (isnet-general-use)
+rembg>=2.0.60,<3.0.0
+
+# ===== Computer Vision =====
+# OpenCV headless version for image processing
+opencv-python-headless>=4.8.0.76,<4.9.0
+
+# ===== System Monitoring =====
+psutil>=5.9.0,<6.0.0
+requests>=2.28.0,<3.0.0
+
+# ===== Production Optimizations =====
+# For environment management
+python-dotenv>=1.0.0,<2.0.0
+
+# ===== Fly.io Specific Optimizations =====
+# Keep dependencies minimal for 256MB limit
+# Total estimated memory usage:
+# - Base Python: ~30MB
+# - Flask + deps: ~20MB  
+# - Pillow: ~15MB
+# - NumPy: ~20MB
+# - ONNX Runtime: ~40MB
+# - rembg: ~30MB
+# - OpenCV: ~25MB
+# - isnet-general-use model: ~40MB
+# - Working memory: ~50MB
+# = Total: ~270MB (108% of free plan limit)
+# 
+# NOTE: This will work but might be tight on memory
+# Consider upgrading to paid plan ($5/month) for 512MB if needed
