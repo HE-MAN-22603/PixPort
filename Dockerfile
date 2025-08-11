@@ -1,6 +1,6 @@
 # ==========================================
-# 🚀 OPTIMIZED DOCKERFILE FOR GOOGLE CLOUD RUN
-# Multi-stage build for faster deploys and smaller images
+# 🚀 OPTIMIZED DOCKERFILE FOR RAILWAY DEPLOYMENT
+# Multi-stage build optimized for 512MB memory limit
 # ==========================================
 
 # ===== STAGE 1: Build Stage =====
@@ -26,11 +26,12 @@ RUN pip install --upgrade pip && \
 # ===== STAGE 2: Production Stage =====
 FROM python:3.11.9-slim as production
 
-# Set environment variables for Cloud Run
+# Set environment variables for Railway deployment
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8080
 ENV PYTHONPATH=/app
+ENV RAILWAY_ENVIRONMENT_NAME=production
 
 # Fix pymatting/numba cache issues in containerized environment
 ENV NUMBA_DISABLE_JIT=1
@@ -86,8 +87,8 @@ USER appuser
 # Note: Model preloading happens at runtime via app.py to avoid Docker build issues
 # The optimized model_utils.py will handle fast loading on container startup
 
-# Preload AI models during build (optional - will continue if fails)
-RUN python download_models.py || echo "Model preload failed, will load at runtime"
+# Skip model preloading for Railway to save memory during build
+# Models will be downloaded at runtime for Railway deployment
 
 # Verify our optimization files are in place
 RUN echo "📝 Verifying optimization setup..." && \
@@ -98,22 +99,21 @@ RUN echo "📝 Verifying optimization setup..." && \
 # Expose port
 EXPOSE 8080
 
-# Health check for Cloud Run
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+# Health check for Railway
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:$PORT/health || exit 1
 
-# ===== OPTIMIZED STARTUP COMMAND =====
-# Use Gunicorn with Cloud Run optimizations
+# ===== RAILWAY OPTIMIZED STARTUP COMMAND =====
+# Use Gunicorn with Railway optimizations (512MB memory limit)
 CMD gunicorn \
     --bind 0.0.0.0:$PORT \
     --workers 1 \
-    --threads 4 \
-    --timeout 300 \
+    --threads 2 \
+    --timeout 60 \
     --keep-alive 2 \
     --max-requests 1000 \
     --max-requests-jitter 100 \
-    --preload \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
-    wsgi:app
+    app:app
