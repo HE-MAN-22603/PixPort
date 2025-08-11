@@ -136,34 +136,19 @@ def test_model_processing():
                 'reason': 'Railway deployment or large file (>5MB)'
             })
         
+        # For non-Railway deployments, use model_manager as primary
         if not is_railway:
             selected_models.append({
                 'priority': 2,
-                'model': 'Tiny U²-Net',
-                'service': 'tiny_u2net_service', 
-                'model_name': 'u2netp',
-                'reason': 'Local deployment'
-            })
-        
-        selected_models.append({
-            'priority': 3,
-            'model': 'Minimal CV',
-            'service': 'minimal_bg_remover',
-            'model_name': 'opencv_cv',
-            'reason': 'Guaranteed fallback'
-        })
-        
-        if not is_railway:
-            selected_models.append({
-                'priority': 4,
-                'model': 'Legacy AI',
+                'model': 'U²-Net Plus',
                 'service': 'model_manager',
                 'model_name': 'u2netp',
-                'reason': 'Final AI fallback for local'
+                'reason': 'Local deployment with u2netp model'
             })
         
+        # Simple fallback for all deployments
         selected_models.append({
-            'priority': 5,
+            'priority': 3,
             'model': 'Simple Fallback',
             'service': 'bg_remover_lite',
             'model_name': 'edge_detection',
