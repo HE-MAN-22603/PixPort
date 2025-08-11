@@ -311,9 +311,15 @@ def download_image(filename):
         from PIL import Image
         import io
         import tempfile
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
+        
+        # Optional reportlab import for PDF functionality
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.units import inch
+            REPORTLAB_AVAILABLE = True
+        except ImportError:
+            REPORTLAB_AVAILABLE = False
         
         # Sanitize and validate filename
         sanitized_filename = sanitize_filename(filename)
@@ -346,6 +352,13 @@ def download_image(filename):
         
         try:
             if requested_format == 'PDF':
+                # Check if reportlab is available for PDF generation
+                if not REPORTLAB_AVAILABLE:
+                    return jsonify({
+                        'success': False,
+                        'error': 'PDF generation not available - reportlab not installed'
+                    }), 501
+                
                 # Create PDF with the image
                 with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
                     # Open the image

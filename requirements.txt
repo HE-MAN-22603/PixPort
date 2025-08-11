@@ -31,6 +31,9 @@ psutil>=5.9.0,<6.0.0
 requests>=2.28.0,<3.0.0
 python-dotenv>=1.0.0,<2.0.0
 
+# ===== PDF Generation =====
+reportlab>=4.0.0,<5.0.0
+
 # ===== Railway Memory Usage Estimates =====
 # Flask + dependencies: ~25MB
 # Pillow: ~15MB  
@@ -38,8 +41,9 @@ python-dotenv>=1.0.0,<2.0.0
 # ONNX Runtime (CPU): ~40MB
 # OpenCV (headless): ~30MB
 # rembg + u2netp model: ~25MB (including tiny model)
+# ReportLab: ~15MB (PDF generation)
 # Working memory: ~100MB
-# Total estimated: ~255MB (50% of Railway's 512MB limit)
+# Total estimated: ~270MB (53% of Railway's 512MB limit)
 
 # ===== Railway Deployment Benefits =====
 # 1. 512MB memory limit (sufficient for u2netp model)
