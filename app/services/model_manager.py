@@ -44,8 +44,14 @@ class ModelManager:
             if original_model != 'u2netp':
                 logger.info(f"Forcing u2netp model instead of {original_model} for Railway compatibility")
             
-            # Reuse session if same model
-            if self._session is not None and self._current_model == model_name:
+            # For Railway: Always recreate session to prevent memory buildup
+            is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+            if is_railway and self._session is not None:
+                logger.info("Railway: Clearing session to prevent memory buildup")
+                self._clear_session()
+            
+            # Reuse session if same model (only for non-Railway)
+            if not is_railway and self._session is not None and self._current_model == model_name:
                 logger.debug(f"Reusing existing session for {model_name}")
                 return self._session
             

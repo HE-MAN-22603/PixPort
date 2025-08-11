@@ -3,6 +3,7 @@ Custom middleware for PixPort
 """
 
 from flask import request, jsonify
+import os
 import time
 
 def setup_middleware(app):
@@ -45,6 +46,22 @@ def setup_middleware(app):
         if hasattr(request, 'start_time'):
             duration = time.time() - request.start_time
             response.headers.add('X-Response-Time', f"{duration:.3f}s")
+        
+        # Aggressive memory cleanup for Railway
+        is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+        if is_railway:
+            import gc
+            gc.collect()  # Force garbage collection after each request
+            
+            # Clear model cache periodically to prevent memory buildup
+            try:
+                import random
+                if random.randint(1, 20) == 1:  # 5% chance to clear cache
+                    from .services.model_manager import model_manager
+                    model_manager.clear_all()
+                    app.logger.info("Railway: Cleared model cache to free memory")
+            except Exception as e:
+                app.logger.warning(f"Memory cleanup error: {e}")
         
         # Comprehensive cache control with aggressive cache busting
         if request.endpoint == 'static' or '/static/' in request.path:

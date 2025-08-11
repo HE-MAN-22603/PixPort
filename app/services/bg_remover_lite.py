@@ -25,6 +25,10 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
     input_image = None
     output_image = None
     
+    # Force garbage collection at start
+    import gc
+    gc.collect()
+    
     try:
         # Validate input file exists
         if not os.path.exists(input_path):

@@ -112,17 +112,19 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:$PORT/health || exit 1
 
-# ===== RAILWAY OPTIMIZED STARTUP COMMAND =====
-# Use Gunicorn with Railway optimizations (512MB memory limit)
+# ===== RAILWAY ULTRA-OPTIMIZED STARTUP COMMAND =====
+# Use Gunicorn with extreme memory optimizations (512MB limit)
 CMD gunicorn \
     --bind 0.0.0.0:$PORT \
     --workers 1 \
-    --threads 2 \
-    --timeout 60 \
-    --keep-alive 2 \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
+    --threads 1 \
+    --timeout 120 \
+    --keep-alive 1 \
+    --max-requests 5 \
+    --max-requests-jitter 2 \
+    --worker-tmp-dir /dev/shm \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
+    --preload \
     wsgi:app

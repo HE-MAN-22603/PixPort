@@ -8,17 +8,17 @@ import multiprocessing
 # Server socket
 bind = f"0.0.0.0:{os.environ.get('PORT', 8080)}"
 
-# Worker processes - optimized for Railway memory constraints
-workers = 1  # Single worker to minimize memory usage
+# Worker processes - ULTRA optimized for Railway 512MB limit
+workers = 1  # Single worker only
 worker_class = "sync"
-worker_connections = 5  # Very limited concurrent connections
+worker_connections = 1  # Minimal concurrent connections
 
-# Worker timeout and aggressive recycling  
-timeout = 180  # 3 minutes for processing (reduced)
-keepalive = 2
-max_requests = 20  # Recycle worker after only 20 requests to prevent memory leaks
-max_requests_jitter = 3  # Add randomness to recycling
-worker_memory_limit = 400  # MB - restart worker if memory exceeds this
+# Aggressive worker recycling to prevent memory buildup
+timeout = 120  # 2 minutes max processing time
+keepalive = 1
+max_requests = 5  # Recycle worker after only 5 requests
+max_requests_jitter = 2  # Add randomness to recycling
+worker_memory_limit = 300  # MB - restart worker if memory exceeds 300MB
 
 # Preload app for better memory sharing
 preload_app = True
