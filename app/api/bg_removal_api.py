@@ -141,8 +141,15 @@ def remove_background():
         memory_info = isnet_tiny_service.get_memory_usage()
         logger.info(f"Memory before processing: {memory_info}")
         
-        # Process with isnet-general-tiny
-        success = isnet_tiny_service.remove_background(input_path, output_path)
+        # Process with Railway-optimized service
+        from ..services.railway_bg_remover import remove_background_railway, is_railway_environment
+        
+        if is_railway_environment():
+            # Use Railway-optimized service (no persistent sessions)
+            success = remove_background_railway(input_path, output_path)
+        else:
+            # Use isnet tiny service for non-Railway
+            success = isnet_tiny_service.remove_background(input_path, output_path)
         
         if not success:
             return jsonify({'error': 'Background removal failed'}), 500

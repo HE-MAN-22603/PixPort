@@ -135,6 +135,7 @@ def create_app():
     from .routes.print_routes import print_bp
     from .routes.static_routes import static_bp
     from .routes.model_status_routes import model_status_bp
+    from .api.bg_removal_api import bg_api  # Railway-optimized background removal API
     
     app.register_blueprint(main_bp)
     app.register_blueprint(process_bp, url_prefix='/process')
@@ -142,6 +143,7 @@ def create_app():
     app.register_blueprint(print_bp, url_prefix='/print')
     app.register_blueprint(static_bp, url_prefix='/static')  # Add /static prefix
     app.register_blueprint(model_status_bp)
+    app.register_blueprint(bg_api)  # Register background removal API at /api/bg
     
     # Ensure upload directories exist and log configuration for debugging
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

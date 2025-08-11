@@ -36,59 +36,46 @@ class ModelManager:
         logger.info("ModelManager initialized")
     
     def get_session(self, model_name: str = 'u2netp'):
-        """Get or create a rembg session - ONLY u2netp model supported"""
+        """LAZY LOADED session - only creates model when actually needed"""
         with self._lock:
-            # Force u2netp model for all environments - Railway optimized
-            original_model = model_name
-            model_name = 'u2netp'  # ONLY u2netp model supported (~4.7MB)
-            if original_model != 'u2netp':
-                logger.info(f"Forcing u2netp model instead of {original_model} for Railway compatibility")
+            # Always use u2netp - no other models to save memory
+            model_name = 'u2netp'
             
-            # For Railway: Always recreate session to prevent memory buildup
+            # Railway mode: ALWAYS clear before creating to prevent memory buildup
             is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
-            if is_railway and self._session is not None:
-                logger.info("Railway: Clearing session to prevent memory buildup")
-                self._clear_session()
+            if is_railway:
+                if self._session is not None:
+                    self._clear_session()
+                # Create fresh session for this request only
+                return self._create_fresh_session(model_name)
             
-            # Reuse session if same model (only for non-Railway)
-            if not is_railway and self._session is not None and self._current_model == model_name:
-                logger.debug(f"Reusing existing session for {model_name}")
+            # Non-Railway: reuse session if exists
+            if self._session is not None and self._current_model == model_name:
                 return self._session
             
-            # Clear old session if exists
+            # Clear old session and create new one
             if self._session is not None:
-                logger.info(f"Switching from {self._current_model} to {model_name}")
                 self._clear_session()
             
-            # Create new session with retry logic
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    logger.info(f"Creating session for {model_name} (attempt {attempt + 1}/{max_retries})")
-                    
-                    # Force garbage collection before loading
-                    import gc
-                    gc.collect()
-                    
-                    # Create session
-                    self._session = new_session(model_name)
-                    self._current_model = model_name
-                    logger.info(f"Session created successfully for {model_name}")
-                    return self._session
-                    
-                except Exception as e:
-                    logger.error(f"Attempt {attempt + 1} failed for {model_name}: {e}")
-                    
-                    # Clear any partial state
-                    self._clear_session()
-                    
-                    if attempt < max_retries - 1:
-                        import time
-                        time.sleep(2)  # Wait before retry
-                    else:
-                        # Final fallback - raise error for calling code to handle
-                        logger.error(f"All attempts failed for {model_name}")
-                        raise RuntimeError(f"Failed to load AI model after {max_retries} attempts: {str(e)}")
+            return self._create_fresh_session(model_name)
+    
+    def _create_fresh_session(self, model_name: str):
+        """Create a fresh session with aggressive memory management"""
+        try:
+            # Aggressive garbage collection before loading
+            gc.collect()
+            
+            logger.info(f"Creating fresh u2netp session for Railway")
+            self._session = new_session(model_name)
+            self._current_model = model_name
+            
+            logger.info(f"u2netp session created successfully")
+            return self._session
+            
+        except Exception as e:
+            logger.error(f"Failed to create u2netp session: {e}")
+            self._clear_session()
+            raise RuntimeError(f"Failed to load u2netp model: {str(e)}")
     
     def _clear_session(self):
         """Clear current session and free memory"""

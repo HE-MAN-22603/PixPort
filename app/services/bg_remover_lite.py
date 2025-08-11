@@ -73,14 +73,27 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         gc.collect()
 
 def _ai_remove_background(input_path: str, output_path: str, model_name: str) -> bool:
-    """AI-powered background removal"""
+    """AI-powered background removal - NO SESSION REUSE for Railway"""
     input_image = None
     output_image = None
+    session = None
     
     try:
-        # Get optimized session from model manager
-        logger.info(f"Getting AI session with model: {model_name}")
-        session = model_manager.get_session(model_name)
+        # Railway: Create disposable session to prevent memory buildup
+        is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+        
+        if is_railway:
+            # Force garbage collection before creating session
+            import gc
+            gc.collect()
+            
+            logger.info(f"Creating disposable {model_name} session for Railway")
+            from rembg import new_session
+            session = new_session(model_name)
+        else:
+            # Use model manager for non-Railway environments
+            logger.info(f"Getting AI session with model: {model_name}")
+            session = model_manager.get_session(model_name)
         
         with open(input_path, 'rb') as input_file:
             input_image = input_file.read()
@@ -97,12 +110,27 @@ def _ai_remove_background(input_path: str, output_path: str, model_name: str) ->
         return True
         
     finally:
+        # CRITICAL: Dispose session immediately for Railway
+        if is_railway and session is not None:
+            try:
+                if hasattr(session, 'clear'):
+                    session.clear()
+                elif hasattr(session, 'close'):
+                    session.close()
+                del session
+                logger.info(f"Disposed {model_name} session for Railway")
+            except Exception as cleanup_error:
+                logger.warning(f"Error disposing session: {cleanup_error}")
+        
+        # Clean up memory
         if input_image is not None:
             del input_image
         if output_image is not None:
             del output_image
+        
         import gc
         gc.collect()
+        gc.collect()  # Double collection for thorough cleanup
 
 def _fallback_background_removal(input_path: str, output_path: str) -> bool:
     """Smart fallback background removal using edge detection and masking"""
