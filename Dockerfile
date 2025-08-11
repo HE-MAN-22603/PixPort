@@ -32,22 +32,22 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8080
 ENV PYTHONPATH=/app
 
-# Install only runtime dependencies (smaller image)
+# Install minimal runtime dependencies (ultra-compatible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    libgomp1 \
-    libgl1-mesa-glx \
-    libgthread-2.0-0 \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 # Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Test if ONNX Runtime needs additional libraries and install if needed
+RUN python -c "import onnxruntime" || \
+    (echo "ONNX Runtime needs additional libraries, installing..." && \
+     apt-get update && apt-get install -y --no-install-recommends libgomp1 && \
+     rm -rf /var/lib/apt/lists/*)
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
