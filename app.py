@@ -32,6 +32,7 @@ elif is_railway:
 else:
     logger.info('💻 Starting PixPort in local development mode')
 
+# Create the Flask app instance
 app = create_app()
 
 # ==========================================
