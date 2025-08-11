@@ -18,13 +18,9 @@ from ..services.utils import allowed_file, save_uploaded_file, validate_image_fi
 from ..services.model_manager import model_manager
 from ..services.isnet_tiny_service import ISNetTinyService
 
-# Import optimized model manager for Cloud Run
-try:
-    from model_utils import model_manager as optimized_model_manager
-    OPTIMIZED_MODELS_AVAILABLE = True
-except ImportError:
-    OPTIMIZED_MODELS_AVAILABLE = False
-    optimized_model_manager = None
+# Remove unused optimized model manager (model_utils removed)
+OPTIMIZED_MODELS_AVAILABLE = False
+optimized_model_manager = None
 
 process_bp = Blueprint('process', __name__)
 

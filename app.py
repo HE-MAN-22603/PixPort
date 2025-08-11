@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 PixPort - AI Passport Photo Maker
-Optimized for Google Cloud Run with preloaded AI models
+Optimized for Railway deployment with u2netp model
 """
 
 # Set numba environment variables early to prevent cache issues
@@ -35,42 +35,18 @@ else:
 app = create_app()
 
 # ==========================================
-# 🚀 OPTIMIZED MODEL PRELOADING FOR CLOUD RUN
+# 🚄 RAILWAY OPTIMIZED DEPLOYMENT
 # ==========================================
 
-def preload_ai_models():
-    """
-    Preload AI models during container startup for faster first requests.
-    This eliminates the 10-15 second delay on first background removal.
-    """
-    start_time = time.time()
+# Use on-demand model loading for Railway's 512MB memory limit
+if is_railway:
+    logger.info("🚄 Railway deployment detected - using memory-optimized configuration")
+    logger.info("📦 Models: u2netp (~4.7MB) + isnet-general-use for Railway optimization")
+    logger.info("💾 Memory limit: 512MB (models load on-demand to save memory)")
+else:
+    logger.info("⏩ Using on-demand model loading with u2netp")
     
-    try:
-        logger.info("📦 Preloading AI models for optimal Cloud Run performance...")
-        
-        # Import our optimized model manager
-        from model_utils import load_model
-        
-        # Preload the model during startup
-        success = load_model()
-        
-        if success:
-            preload_time = time.time() - start_time
-            logger.info(f"✅ AI model preloaded in {preload_time:.2f}s - first requests will be fast!")
-            return True
-        else:
-            logger.warning("⚠️ Model preload failed - models will load on first request")
-            return False
-            
-    except Exception as e:
-        load_time = time.time() - start_time
-        logger.error(f"❌ Model preload failed after {load_time:.2f}s: {e}")
-        logger.info("🔄 Falling back to on-demand model loading")
-        return False
-
-# Skip model preloading - use on-demand loading with Railway-optimized u2netp model
-logger.info("⏩ Using on-demand model loading with u2netp (Railway optimized)")
-logger.info("🚄 Models will load automatically when first background removal is requested")
+logger.info("🤖 Models will load automatically when first background removal is requested")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

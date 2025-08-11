@@ -15,8 +15,8 @@ def download_models():
         # Import rembg here to handle import errors gracefully
         from rembg import new_session
         
-        # Only download essential model for Railway
-        model_name = 'u2net'
+        # Only download u2netp model for Railway (smallest and most efficient)
+        model_name = 'u2netp'
         print(f"⏳ Downloading {model_name}...")
         session = new_session(model_name)
         print(f"✅ {model_name} downloaded successfully!")
@@ -37,7 +37,7 @@ def test_model_availability():
     """Test if at least one model is available"""
     try:
         from rembg import new_session
-        session = new_session('u2net')
+        session = new_session('u2netp')
         print("✅ AI models are ready for use")
         return True
     except Exception as e:

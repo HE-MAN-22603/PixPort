@@ -73,8 +73,8 @@ COPY --chown=appuser:appuser app/ ./app/
 # Copy essential Python files
 COPY --chown=appuser:appuser wsgi.py ./
 COPY --chown=appuser:appuser app.py ./
-COPY --chown=appuser:appuser model_utils.py ./
-COPY --chown=appuser:appuser download_models.py ./
+# model_utils.py removed - using simplified Railway-optimized services
+# download_models.py available but not needed in container
 COPY --chown=appuser:appuser requirements.txt ./
 
 # Copy configuration files
@@ -90,11 +90,11 @@ USER appuser
 # Skip model preloading for Railway to save memory during build
 # Models will be downloaded at runtime for Railway deployment
 
-# Verify our optimization files are in place
-RUN echo "📝 Verifying optimization setup..." && \
-    python -c "import model_utils; print('✅ model_utils.py available')" && \
+# Verify Flask app structure
+RUN echo "📝 Verifying app structure..." && \
     python -c "from app import create_app; print('✅ Flask app structure valid')" && \
-    echo "✅ All optimization components verified!"
+    python -c "from app.services.isnet_tiny_service import ISNetTinyService; print('✅ Railway services available')" && \
+    echo "✅ Railway optimization components verified!"
 
 # Expose port
 EXPOSE 8080

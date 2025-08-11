@@ -125,7 +125,7 @@ class ISNetTinyService:
             logger.info("Attempting to use rembg to access isnet-general-tiny...")
             
             # Create session to trigger model download
-            temp_session = new_session('isnet-general-use')  # This should be the tiny variant
+            temp_session = new_session('isnet-general-use')  # Use available model
             
             # Try to get the model path from the session
             if hasattr(temp_session, 'model_path'):
