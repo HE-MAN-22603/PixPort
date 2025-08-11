@@ -49,24 +49,30 @@ RUN python -c "import onnxruntime" || \
      apt-get update && apt-get install -y --no-install-recommends libgomp1 && \
      rm -rf /var/lib/apt/lists/*)
 
+# Set work directory first
+WORKDIR /app
+
+# Create necessary directories
+RUN mkdir -p /tmp/uploads /tmp/processed /app/logs
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Set work directory
-WORKDIR /app
+# Set proper permissions for directories
+RUN chown -R appuser:appuser /tmp/uploads /tmp/processed /app
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /tmp/uploads /tmp/processed /app/logs && \
-    chown -R appuser:appuser /tmp/uploads /tmp/processed /app
-
-# Copy application code (exclude unnecessary files)
+# Copy application code
 COPY --chown=appuser:appuser app/ ./app/
-COPY --chown=appuser:appuser *.py .
-COPY --chown=appuser:appuser requirements.txt .
-COPY --chown=appuser:appuser preload_models.py ./
 
-# Copy configuration files if they exist
-COPY --chown=appuser:appuser gunicorn.conf.py* ./
+# Copy essential Python files
+COPY --chown=appuser:appuser wsgi.py ./
+COPY --chown=appuser:appuser app.py ./
+COPY --chown=appuser:appuser model_utils.py ./
+COPY --chown=appuser:appuser preload_models.py ./
+COPY --chown=appuser:appuser requirements.txt ./
+
+# Copy configuration files
+COPY --chown=appuser:appuser gunicorn.conf.py ./
 
 # Switch to non-root user
 USER appuser
