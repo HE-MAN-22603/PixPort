@@ -113,7 +113,7 @@ python download_models.py
 
 6. **Run the application**
 ```bash
-python app.py
+python main.py
 ```
 
 7. **Open in browser**

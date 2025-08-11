@@ -72,7 +72,7 @@ COPY --chown=appuser:appuser app/ ./app/
 
 # Copy essential Python files
 COPY --chown=appuser:appuser wsgi.py ./
-COPY --chown=appuser:appuser app.py ./
+COPY --chown=appuser:appuser main.py ./
 # model_utils.py removed - using simplified Railway-optimized services
 # download_models.py available but not needed in container
 COPY --chown=appuser:appuser requirements.txt ./
@@ -116,4 +116,4 @@ CMD gunicorn \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
-    app:app
+    wsgi:app
