@@ -16,6 +16,7 @@ from ..services.enhancer import enhance_image
 from ..services.photo_resizer import resize_to_passport
 from ..services.utils import allowed_file, save_uploaded_file, validate_image_file
 from ..services.model_manager import model_manager
+from ..services.isnet_tiny_service import ISNetTinyService
 
 # Import optimized model manager for Cloud Run
 try:
@@ -29,6 +30,28 @@ process_bp = Blueprint('process', __name__)
 
 # Initialize limiter for processing routes with improved limits
 limiter = Limiter(key_func=get_remote_address)
+
+def _remove_background_optimized(input_path: str, output_path: str) -> bool:
+    """Route background removal to the appropriate service based on environment"""
+    is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
+    
+    if is_railway:
+        # Use Railway-optimized ISNet service
+        try:
+            current_app.logger.info("Using Railway-optimized ISNet service")
+            railway_service = ISNetTinyService()
+            return railway_service.remove_background(input_path, output_path)
+        except Exception as e:
+            current_app.logger.error(f"Railway service failed: {e}, falling back to standard")
+    
+    # Fallback to standard service
+    try:
+        current_app.logger.info("Using standard background removal service")
+        remove_background(input_path, output_path, 'u2netp')
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Standard background removal failed: {e}")
+        return False
 
 # Memory management helper function
 def check_memory_availability():
@@ -195,8 +218,10 @@ def remove_bg(filename):
         output_filename = f"{name}_no_bg{ext}"
         output_path = os.path.join(current_app.config['PROCESSED_FOLDER'], output_filename)
         
-        # Process image
-        remove_background(input_path, output_path, current_app.config['REMBG_MODEL'])
+        # Process image with Railway-optimized routing
+        success = _remove_background_optimized(input_path, output_path)
+        if not success:
+            raise Exception("Background removal failed")
         
         return jsonify({
             'success': True,
@@ -260,8 +285,10 @@ def change_bg(filename):
         temp_no_bg_filename = f"{name}_temp_no_bg_{uuid.uuid4().hex[:8]}{ext}"
         temp_no_bg_path = os.path.join(current_app.config['PROCESSED_FOLDER'], temp_no_bg_filename)
         
-        # Remove background using AI model
-        remove_background(input_path, temp_no_bg_path, current_app.config['REMBG_MODEL'])
+        # Remove background using Railway-optimized method
+        success = _remove_background_optimized(input_path, temp_no_bg_path)
+        if not success:
+            raise Exception("Background removal failed")
         
         # Step 2: Apply new background color to clean transparent image
         # Sanitize color name for filename
