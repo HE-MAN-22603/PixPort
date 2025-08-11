@@ -16,7 +16,6 @@ from ..services.enhancer import enhance_image
 from ..services.photo_resizer import resize_to_passport
 from ..services.utils import allowed_file, save_uploaded_file, validate_image_file
 from ..services.model_manager import model_manager
-from ..services.isnet_tiny_service import ISNetTinyService
 
 # Remove unused optimized model manager (model_utils removed)
 OPTIMIZED_MODELS_AVAILABLE = False
@@ -28,25 +27,14 @@ process_bp = Blueprint('process', __name__)
 limiter = Limiter(key_func=get_remote_address)
 
 def _remove_background_optimized(input_path: str, output_path: str) -> bool:
-    """Route background removal to the appropriate service based on environment"""
-    is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
-    
-    if is_railway:
-        # Use Railway-optimized ISNet service
-        try:
-            current_app.logger.info("Using Railway-optimized ISNet service")
-            railway_service = ISNetTinyService()
-            return railway_service.remove_background(input_path, output_path)
-        except Exception as e:
-            current_app.logger.error(f"Railway service failed: {e}, falling back to standard")
-    
-    # Fallback to standard service
+    """Route background removal to the appropriate service - ALWAYS use u2netp model"""
+    # ALWAYS use standard u2netp model for consistency
     try:
-        current_app.logger.info("Using standard background removal service")
+        current_app.logger.info("Using u2netp model for background removal")
         remove_background(input_path, output_path, 'u2netp')
         return True
     except Exception as e:
-        current_app.logger.error(f"Standard background removal failed: {e}")
+        current_app.logger.error(f"u2netp background removal failed: {e}")
         return False
 
 # Memory management helper function

@@ -38,6 +38,11 @@ ENV NUMBA_DISABLE_JIT=1
 ENV NUMBA_CACHE_DIR=/tmp/.numba_cache
 ENV NUMBA_DISABLE_PERFORMANCE_WARNINGS=1
 
+# Set model cache directories to writable locations
+ENV U2NET_HOME=/home/appuser/.u2net
+ENV REMBG_HOME=/home/appuser/.rembg
+ENV XDG_CACHE_HOME=/home/appuser/.cache
+
 # Install minimal runtime dependencies (ultra-compatible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -58,14 +63,17 @@ RUN python -c "import onnxruntime" || \
 # Set work directory first
 WORKDIR /app
 
-# Create necessary directories including numba cache
-RUN mkdir -p /tmp/uploads /tmp/processed /app/logs /tmp/.numba_cache
+# Create necessary directories including numba cache and model cache
+RUN mkdir -p /tmp/uploads /tmp/processed /app/logs /tmp/.numba_cache /tmp/pixport/uploads /tmp/pixport/processed
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Set proper permissions for directories including numba cache
-RUN chown -R appuser:appuser /tmp/uploads /tmp/processed /tmp/.numba_cache /app
+# Create model cache directory in user home
+RUN mkdir -p /home/appuser/.cache /home/appuser/.u2net /home/appuser/.rembg
+
+# Set proper permissions for all directories
+RUN chown -R appuser:appuser /tmp/uploads /tmp/processed /tmp/.numba_cache /tmp/pixport /app /home/appuser
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/
@@ -90,11 +98,12 @@ USER appuser
 # Skip model preloading for Railway to save memory during build
 # Models will be downloaded at runtime for Railway deployment
 
-# Verify Flask app structure
+# Verify Flask app structure and u2netp model availability
 RUN echo "📝 Verifying app structure..." && \
     python -c "from app import create_app; print('✅ Flask app structure valid')" && \
-    python -c "from app.services.isnet_tiny_service import ISNetTinyService; print('✅ Railway services available')" && \
-    echo "✅ Railway optimization components verified!"
+    python -c "from app.services.model_manager import model_manager; print('✅ Model manager available')" && \
+    python -c "from app.services.bg_remover_lite import remove_background; print('✅ u2netp background removal service ready')" && \
+    echo "✅ u2netp model configuration verified!"
 
 # Expose port
 EXPOSE 8080

@@ -7,6 +7,11 @@ try:
     print("🚀 Testing PixPort Flask Application")
     print("=" * 50)
     
+    # Add parent directory to path
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
     # Test basic imports
     print("📦 Testing imports...")
     from app import create_app
@@ -54,7 +59,7 @@ try:
     print("\n🎉 All tests passed!")
     print("✅ PixPort is ready to run!")
     print("\n💡 To start the server, run:")
-    print("   python app.py")
+    print("   python main.py")
     
 except Exception as e:
     print(f"❌ Error: {e}")
