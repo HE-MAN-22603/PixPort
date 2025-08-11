@@ -9,8 +9,6 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
-      - '-t'
       - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
       - '--cache-from'
       - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
@@ -20,13 +18,6 @@ steps:
     timeout: '900s'  # 15 minutes for model downloads
 
   # ===== STEP 2: PUSH TO ARTIFACT REGISTRY =====
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-versioned-image'
-    args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
-    waitFor: ['build-optimized-image']
-
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-latest-image'
     args:
@@ -42,7 +33,7 @@ steps:
       - 'run'
       - 'deploy'
       - 'pixport-optimized'
-      - '--image=us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
+      - '--image=us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
       - '--region=us-central1'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -56,7 +47,7 @@ steps:
       - '--execution-environment=gen2'
       - '--set-env-vars=FLASK_ENV=production,SECRET_KEY=pixport-optimized-cloud-run-2024,PYTHONOPTIMIZE=1,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use'
       - '--cpu-boost'  # Enable CPU boost for faster cold starts
-    waitFor: ['push-versioned-image', 'push-latest-image']
+    waitFor: ['push-latest-image']
 
   # ===== STEP 4: POST-DEPLOYMENT HEALTH CHECKS =====
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -141,7 +132,6 @@ timeout: '1800s'  # 30 minutes
 
 # Images to be pushed to registry
 images:
-  - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
   - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
 
 # Tags for the build
