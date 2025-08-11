@@ -9,7 +9,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
       - '-t'
       - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
       - '--cache-from'
@@ -24,7 +24,7 @@ steps:
     id: 'push-versioned-image'
     args:
       - 'push'
-      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
     waitFor: ['build-optimized-image']
 
   - name: 'gcr.io/cloud-builders/docker'
@@ -42,7 +42,7 @@ steps:
       - 'run'
       - 'deploy'
       - 'pixport-optimized'
-      - '--image=us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$COMMIT_SHA'
+      - '--image=us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
       - '--region=us-central1'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -141,7 +141,7 @@ timeout: '1800s'  # 30 minutes
 
 # Images to be pushed to registry
 images:
-  - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:$SHORT_SHA'
   - 'us-central1-docker.pkg.dev/pixport-468609/pixport-images/pixport-optimized:latest'
 
 # Tags for the build
