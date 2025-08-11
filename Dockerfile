@@ -63,6 +63,7 @@ RUN mkdir -p /tmp/uploads /tmp/processed /app/logs && \
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser *.py .
 COPY --chown=appuser:appuser requirements.txt .
+COPY --chown=appuser:appuser preload_models.py ./
 
 # Copy configuration files if they exist
 COPY --chown=appuser:appuser gunicorn.conf.py* ./
@@ -71,36 +72,17 @@ COPY --chown=appuser:appuser gunicorn.conf.py* ./
 USER appuser
 
 # ===== MODEL PRELOADING OPTIMIZATION =====
-# Download and cache AI models during build (not at runtime)
-# This eliminates the cold start delay
-RUN python -c "
-print('📦 Pre-downloading AI models for faster cold starts...')
-try:
-    # Import and trigger model download
-    from rembg import new_session
-    print('Downloading isnet-general-use model...')
-    session = new_session('isnet-general-use')
-    print('✅ Model downloaded and cached successfully!')
-except Exception as e:
-    print(f'⚠️ Model download failed: {e}')
-    print('Models will be downloaded on first request.')
-"
+# Note: Model preloading happens at runtime via app.py to avoid Docker build issues
+# The optimized model_utils.py will handle fast loading on container startup
 
-# Test model loading to ensure everything works
-RUN python -c "
-print('📝 Testing model loading...')
-try:
-    from model_utils import load_model
-    success = load_model()
-    if success:
-        print('✅ Model preloading test successful!')
-    else:
-        print('⚠️ Model preloading test failed, but app will still work.')
-except Exception as e:
-    print(f'⚠️ Model test failed: {e}')
-    print('App will use fallback loading.')
-print('📝 Model testing complete.')
-"
+# Preload AI models during build (optional - will continue if fails)
+RUN python preload_models.py || echo "Model preload failed, will load at runtime"
+
+# Verify our optimization files are in place
+RUN echo "📝 Verifying optimization setup..." && \
+    python -c "import model_utils; print('✅ model_utils.py available')" && \
+    python -c "from app import create_app; print('✅ Flask app structure valid')" && \
+    echo "✅ All optimization components verified!"
 
 # Expose port
 EXPOSE 8080

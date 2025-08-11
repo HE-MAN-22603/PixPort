@@ -78,6 +78,8 @@ Thumbs.db
 docs/
 *.md
 !README.md
+CLOUD_RUN_OPTIMIZATION_GUIDE.md
+TESTING_OPTIMIZATIONS.md
 
 # Development files
 tests/
@@ -128,7 +130,6 @@ dataset/
 
 # Cloud specific
 .gcloudignore
-cloudbuild.yaml
 docker-compose.yml
 
 # Railway files (removed)
