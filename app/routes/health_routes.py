@@ -113,14 +113,9 @@ def memory_status():
         # Model manager info
         model_info = model_manager.get_memory_info()
         
-        # Check if lightweight processor is available
-        lightweight_status = 'available'
-        try:
-            from ..services.lightweight_bg_removal import lightweight_remover
-            lightweight_ready = lightweight_remover.initialized
-        except Exception:
-            lightweight_status = 'unavailable'
-            lightweight_ready = False
+        # u2netp model status (Railway optimized)
+        u2netp_status = 'available'
+        u2netp_ready = model_info.get('current_model') == 'u2netp'
         
         return jsonify({
             'system_memory': {
@@ -134,10 +129,11 @@ def memory_status():
                 'percent': round(process.memory_percent(), 2)
             },
             'ai_models': model_info,
-            'lightweight_processor': {
-                'status': lightweight_status,
-                'ready': lightweight_ready,
-                'memory_footprint': '~20MB'
+            'u2netp_processor': {
+                'status': u2netp_status,
+                'ready': u2netp_ready,
+                'memory_footprint': '~25MB',
+                'model': 'u2netp (Railway optimized)'
             },
             'processing_strategy': 'lightweight_first',
             'worker_pid': os.getpid()

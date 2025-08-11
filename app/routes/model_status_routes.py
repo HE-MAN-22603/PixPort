@@ -23,79 +23,23 @@ def get_model_status():
             'models': {}
         }
         
-        # Check Railway BG Remover
+        # Check Model Manager (u2netp only - Railway optimized)
         try:
-            from app.services.railway_bg_remover import railway_bg_remover
-            railway_memory = railway_bg_remover.get_memory_usage()
-            status['models']['railway_bg_remover'] = {
+            from app.services.model_manager import model_manager
+            manager_memory = model_manager.get_memory_info()
+            status['models']['model_manager'] = {
                 'loaded': True,
-                'model_name': railway_memory.get('model_name', 'isnet-general-use'),
-                'memory_mb': round(railway_memory.get('rss_mb', 0), 1),
-                'model_loaded': railway_memory.get('model_loaded', False),
-                'priority': 1 if is_railway else 3,
-                'description': 'isnet-general-use (tiny ~1.6MB model)'
+                'model_name': manager_memory.get('current_model', 'u2netp'),
+                'memory_mb': round(manager_memory.get('rss', 0), 1),
+                'model_loaded': manager_memory.get('current_model') is not None,
+                'priority': 1,
+                'description': 'u2netp model (Railway optimized ~4.7MB)'
             }
         except Exception as e:
-            status['models']['railway_bg_remover'] = {
+            status['models']['model_manager'] = {
                 'loaded': False,
                 'error': str(e)
             }
-        
-        # Check Minimal BG Remover
-        try:
-            from app.services.minimal_bg_remover import minimal_bg_remover
-            minimal_memory = minimal_bg_remover.get_memory_usage()
-            status['models']['minimal_bg_remover'] = {
-                'loaded': True,
-                'model_name': minimal_memory.get('model_name', 'opencv_cv'),
-                'memory_mb': round(minimal_memory.get('rss_mb', 0), 1),
-                'model_loaded': minimal_memory.get('model_loaded', False),
-                'priority': 2 if is_railway else 2,
-                'description': 'OpenCV computer vision (<100MB RAM)'
-            }
-        except Exception as e:
-            status['models']['minimal_bg_remover'] = {
-                'loaded': False,
-                'error': str(e)
-            }
-        
-        # Check Tiny U2Net (for local)
-        if not is_railway:
-            try:
-                from app.services.tiny_u2net_service import tiny_u2net_service
-                tiny_memory = tiny_u2net_service.get_memory_usage()
-                status['models']['tiny_u2net'] = {
-                    'loaded': True,
-                    'model_name': 'u2netp',
-                    'memory_mb': round(tiny_memory.get('rss_mb', 0), 1),
-                    'model_loaded': tiny_memory.get('model_loaded', False),
-                    'priority': 1,
-                    'description': 'Tiny U²-Net (u2netp model)'
-                }
-            except Exception as e:
-                status['models']['tiny_u2net'] = {
-                    'loaded': False,
-                    'error': str(e)
-                }
-        
-        # Check Model Manager (legacy AI models)
-        if not is_railway:
-            try:
-                from app.services.model_manager import model_manager
-                manager_memory = model_manager.get_memory_info()
-                status['models']['model_manager'] = {
-                    'loaded': True,
-                    'model_name': manager_memory.get('current_model', 'None'),
-                    'memory_mb': round(manager_memory.get('rss', 0), 1),
-                    'model_loaded': manager_memory.get('current_model') is not None,
-                    'priority': 4,
-                    'description': 'Legacy AI models (u2net, u2netp, silueta)'
-                }
-            except Exception as e:
-                status['models']['model_manager'] = {
-                    'loaded': False,
-                    'error': str(e)
-                }
         
         # Add system memory info
         try:
@@ -126,20 +70,11 @@ def get_model_status():
         except Exception as e:
             status['system_memory'] = {'error': str(e)}
         
-        # Add processing strategy
-        if is_railway:
-            status['processing_strategy'] = [
-                '1. Railway BG Remover (isnet-general-use)',
-                '2. Minimal BG Remover (OpenCV)',
-                '3. Simple Fallback'
-            ]
-        else:
-            status['processing_strategy'] = [
-                '1. Tiny U²-Net (u2netp)',
-                '2. Minimal BG Remover (OpenCV)', 
-                '3. Legacy AI Models',
-                '4. Simple Fallback'
-            ]
+        # Add processing strategy (simplified for Railway)
+        status['processing_strategy'] = [
+            '1. u2netp model (Railway optimized)',
+            '2. Simple Fallback (edge detection)'
+        ]
         
         return jsonify(status), 200
         
@@ -156,23 +91,7 @@ def clear_model_memory():
     try:
         cleared_models = []
         
-        # Clear Railway BG Remover
-        try:
-            from app.services.railway_bg_remover import railway_bg_remover
-            railway_bg_remover.clear_memory()
-            cleared_models.append('railway_bg_remover')
-        except Exception as e:
-            logger.warning(f"Failed to clear railway_bg_remover: {e}")
-        
-        # Clear Tiny U2Net
-        try:
-            from app.services.tiny_u2net_service import tiny_u2net_service
-            tiny_u2net_service.clear_memory()
-            cleared_models.append('tiny_u2net_service')
-        except Exception as e:
-            logger.warning(f"Failed to clear tiny_u2net_service: {e}")
-        
-        # Clear Model Manager
+        # Clear Model Manager (u2netp model)
         try:
             from app.services.model_manager import model_manager
             model_manager.clear_all()

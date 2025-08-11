@@ -153,9 +153,9 @@ def remove_and_change_background(input_path: str, output_path: str, bg_color: tu
         logger.error(f"Error in remove and change background: {str(e)}")
         raise e
 
-def railway_background_change(input_path: str, output_path: str, bg_color: tuple) -> bool:
+def u2netp_background_change(input_path: str, output_path: str, bg_color: tuple) -> bool:
     """
-    Remove background and change color using Railway-optimized isnet-general-use in one step
+    Remove background and change color using u2netp model in one step
     
     Args:
         input_path (str): Path to input image
@@ -166,41 +166,51 @@ def railway_background_change(input_path: str, output_path: str, bg_color: tuple
         bool: True if successful
     """
     try:
-        logger.info(f"Using Railway-optimized isnet for background change to {bg_color}")
+        logger.info(f"Using u2netp model for background change to {bg_color}")
         
-        # Import the Railway background remover service
-        from .railway_bg_remover import railway_bg_remover
+        # Use the standard background removal with u2netp, then apply color
+        from .bg_remover_lite import remove_background
         
-        # Use the integrated background removal and color change
-        return railway_bg_remover.change_background_color(input_path, output_path, bg_color)
+        # Step 1: Remove background with u2netp model
+        temp_path = output_path.replace('.jpg', '_temp.png').replace('.jpeg', '_temp.png')
+        if not remove_background(input_path, temp_path, 'u2netp'):
+            return False
+        
+        # Step 2: Apply background color
+        try:
+            from PIL import Image
+            
+            # Load transparent image
+            foreground = Image.open(temp_path).convert('RGBA')
+            
+            # Create background with specified color
+            background = Image.new('RGBA', foreground.size, bg_color + (255,))
+            
+            # Composite images
+            result = Image.alpha_composite(background, foreground)
+            
+            # Convert to RGB and save
+            result = result.convert('RGB')
+            ext = os.path.splitext(output_path)[1].lower()
+            if ext in ['.jpg', '.jpeg']:
+                result.save(output_path, 'JPEG', quality=95, optimize=True)
+            else:
+                result.save(output_path, 'PNG', optimize=True)
+            
+            # Cleanup temp file
+            try:
+                os.remove(temp_path)
+            except:
+                pass
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error applying background color: {e}")
+            return False
         
     except Exception as e:
-        logger.error(f"Error in Railway background change: {e}")
-        return False
-
-def tiny_u2net_background_change(input_path: str, output_path: str, bg_color: tuple) -> bool:
-    """
-    Remove background and change color using Tiny U²-Net in one optimized step
-    
-    Args:
-        input_path (str): Path to input image
-        output_path (str): Path to save output
-        bg_color (tuple): RGB color tuple
-    
-    Returns:
-        bool: True if successful
-    """
-    try:
-        logger.info(f"Using Tiny U²-Net for background change to {bg_color}")
-        
-        # Import the Tiny U²-Net service
-        from .tiny_u2net_service import tiny_u2net_service
-        
-        # Use the integrated background removal and color change
-        return tiny_u2net_service.change_background_color(input_path, output_path, bg_color)
-        
-    except Exception as e:
-        logger.error(f"Error in Tiny U²-Net background change: {e}")
+        logger.error(f"Error in u2netp background change: {e}")
         return False
 
 def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
@@ -219,18 +229,12 @@ def smart_background_change(input_path: str, output_path: str, bg_color: tuple):
     try:
         is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
         
-        # Priority 1: Railway-optimized background change (isnet-general-use)
-        if is_railway:
-            if railway_background_change(input_path, output_path, bg_color):
-                logger.info("✅ Railway-optimized background change succeeded")
-                return True
-        
-        # Priority 2: Tiny U²-Net (for local or Railway fallback)
-        if tiny_u2net_background_change(input_path, output_path, bg_color):
-            logger.info("✅ Tiny U²-Net background change succeeded")
+        # Use u2netp model for background change (Railway optimized)
+        if u2netp_background_change(input_path, output_path, bg_color):
+            logger.info("✅ u2netp background change succeeded")
             return True
         
-        logger.warning("Tiny U²-Net failed, falling back to smart method")
+        logger.warning("u2netp model failed, falling back to smart method")
         # Create output directory
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         

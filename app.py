@@ -24,14 +24,8 @@ logger = logging.getLogger(__name__)
 # Detect deployment environment
 is_cloud_run = os.environ.get('K_SERVICE') is not None
 is_railway = os.environ.get('RAILWAY_ENVIRONMENT_NAME') is not None
-is_flyio = os.environ.get('FLY_APP_NAME') is not None or os.environ.get('FLY_DEPLOYMENT') is not None
 
-if is_flyio:
-    logger.info('🪂 Starting PixPort on Fly.io')
-    # Force isnet-general-use for Fly.io free plan
-    os.environ.setdefault('REMBG_MODEL', 'isnet-general-use')
-    os.environ.setdefault('MEMORY_CONSTRAINED', 'true')
-elif is_cloud_run:
+if is_cloud_run:
     logger.info('🚀 Starting PixPort on Google Cloud Run')
 elif is_railway:
     logger.info('🚄 Starting PixPort on Railway')
@@ -74,14 +68,9 @@ def preload_ai_models():
         logger.info("🔄 Falling back to on-demand model loading")
         return False
 
-# Preload models based on environment
-if is_cloud_run or (not is_railway and not os.environ.get('SKIP_AI_MODELS')):
-    # Preload on Cloud Run and local development
-    logger.info("🎯 Environment supports model preloading")
-    preload_ai_models()
-else:
-    # Skip preload on Railway (memory constraints) or when explicitly disabled
-    logger.info("⏩ Skipping model preload - using on-demand loading")
+# Skip model preloading - use on-demand loading with Railway-optimized u2netp model
+logger.info("⏩ Using on-demand model loading with u2netp (Railway optimized)")
+logger.info("🚄 Models will load automatically when first background removal is requested")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
@@ -93,6 +82,27 @@ if __name__ == '__main__':
     print(f'🌍 Environment: {"Production" if os.environ.get("RAILWAY_ENVIRONMENT_NAME") else "Development"}')
     print(f'🔗 Local URL: http://127.0.0.1:{port}')
     print(f'🔗 Network URL: http://0.0.0.0:{port}')
+    
+    # Display AI model information
+    try:
+        from app.services.model_manager import model_manager
+        print('\n🤖 AI Model Information:')
+        print(f'   Model: u2netp (Railway optimized)')
+        print(f'   Size: ~4.7MB (memory efficient)')
+        print(f'   Status: Ready for background removal')
+        
+        # Try to get memory info if available
+        try:
+            import psutil
+            process = psutil.Process()
+            memory_mb = process.memory_info().rss / 1024 / 1024
+            print(f'   Memory: {memory_mb:.1f} MB')
+        except:
+            print(f'   Memory: Monitoring not available')
+            
+    except Exception as e:
+        print(f'\n⚠️ AI Model: Error loading model info - {e}')
+    
     print('\n✅ Server ready to accept connections!')
     print('='*50)
     

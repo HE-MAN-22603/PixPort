@@ -35,19 +35,14 @@ class ModelManager:
         self._initialized = True
         logger.info("ModelManager initialized")
     
-    def get_session(self, model_name: str = 'u2net'):
-        """Get or create a rembg session with memory optimization"""
+    def get_session(self, model_name: str = 'u2netp'):
+        """Get or create a rembg session - ONLY u2netp model supported"""
         with self._lock:
-            # Force smaller model for Railway's memory constraints
+            # Force u2netp model for all environments - Railway optimized
             original_model = model_name
-            if os.environ.get('RAILWAY_ENVIRONMENT_NAME') or self._is_memory_constrained():
-                # Always use the smallest model in production or memory-constrained environments
-                model_name = 'u2netp'  # Tiny U²-Net - smallest available model (~4.7MB)
-                logger.info(f"Memory-constrained mode: using {model_name} instead of {original_model}")
-            elif model_name == 'u2net':
-                # Default to u2netp for better memory usage
-                model_name = 'u2netp'
-                logger.info(f"Defaulting to memory-efficient u2netp instead of {original_model}")
+            model_name = 'u2netp'  # ONLY u2netp model supported (~4.7MB)
+            if original_model != 'u2netp':
+                logger.info(f"Forcing u2netp model instead of {original_model} for Railway compatibility")
             
             # Reuse session if same model
             if self._session is not None and self._current_model == model_name:

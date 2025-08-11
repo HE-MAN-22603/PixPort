@@ -43,48 +43,14 @@ def remove_background(input_path: str, output_path: str, model_name: str = 'u2ne
         
         logger.info(f"Processing image: {input_path} ({file_size} bytes) - {'Railway' if is_railway else 'Local'} deployment")
         
-        # Priority 1: Railway-optimized isnet-general-use (tiny model ~1.6MB)
-        if is_railway or file_size > 5 * 1024 * 1024:  # Use for Railway or large files
-            try:
-                logger.info(f"Attempting Railway-optimized isnet-general-use for: {input_path}")
-                from .railway_bg_remover import railway_bg_remover
-                if railway_bg_remover.remove_background(input_path, output_path):
-                    logger.info("✅ Railway isnet-general-use background removal succeeded")
-                    return True
-            except Exception as railway_error:
-                logger.warning(f"Railway isnet-general-use failed: {railway_error}")
-        
-        # Priority 2: Tiny U²-Net (fallback for local or if Railway method fails)
-        if not is_railway:  # Only try for local deployment
-            try:
-                logger.info(f"Attempting Tiny U²-Net background removal for: {input_path}")
-                from .tiny_u2net_service import tiny_u2net_service
-                if tiny_u2net_service.remove_background(input_path, output_path):
-                    logger.info("✅ Tiny U²-Net background removal succeeded")
-                    return True
-            except Exception as tiny_u2net_error:
-                logger.warning(f"Tiny U²-Net method failed: {tiny_u2net_error}")
-        
-        # Priority 3: Minimal memory OpenCV method (guaranteed to work)
+        # Use u2netp model ONLY for Railway compatibility
         try:
-            logger.info(f"Attempting minimal memory CV background removal for: {input_path}")
-            from .minimal_bg_remover import minimal_bg_remover
-            if minimal_bg_remover.remove_background(input_path, output_path):
-                logger.info("✅ Minimal CV background removal succeeded")
-                return True
-        except Exception as minimal_error:
-            logger.warning(f"Minimal CV method failed: {minimal_error}")
+            logger.info(f"Using u2netp model for: {input_path}")
+            return _ai_remove_background(input_path, output_path, 'u2netp')
+        except Exception as u2netp_error:
+            logger.warning(f"u2netp model failed: {u2netp_error}")
         
-        # Priority 4: Legacy AI method (only for local with sufficient memory)
-        if not is_railway:
-            try:
-                logger.info("Trying legacy AI background removal")
-                return _ai_remove_background(input_path, output_path, 'u2netp')  # Force tiny model
-                
-            except (RuntimeError, MemoryError, Exception) as ai_error:
-                logger.warning(f"Legacy AI background removal failed: {ai_error}")
-        
-        # Priority 5: Simple fallback (always works)
+        # Simple fallback if u2netp fails
         logger.info("Using simple fallback background removal")
         return _fallback_background_removal(input_path, output_path)
         

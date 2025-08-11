@@ -65,8 +65,8 @@ class Config:
     # Allowed file extensions
     ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'heic', 'webp'}
     
-    # AI Model settings
-    REMBG_MODEL = os.environ.get('REMBG_MODEL') or 'u2net'
+    # AI Model settings - Railway optimized
+    REMBG_MODEL = os.environ.get('REMBG_MODEL') or 'u2netp'  # Use tiny model for Railway
     
     # Rate limiting - Use Redis URL from Railway if available, fallback to memory
     REDIS_URL = os.environ.get('REDIS_URL')
