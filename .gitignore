@@ -348,13 +348,12 @@ IMPLEMENTATION_SUMMARY_backup.*
 !.dockerignore
 !.gcloudignore
 !.env.cloudrun
-# Exclude old Railway files
-railway.toml
-railway.json
-nixpacks.toml
-Procfile
-runtime.txt
-requirements-railway.txt
+# Allow Railway deployment files
+# railway.toml - needed for Railway config
+# nixpacks.toml - needed for Nixpacks build
+# Procfile - needed for process definition
+# requirements-railway.txt - needed for Railway dependencies
+# Keep railway deployment logs ignored
 railway_deployment.log
 
 # Memory monitoring and performance
