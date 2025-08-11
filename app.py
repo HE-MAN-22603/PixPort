@@ -4,8 +4,13 @@ PixPort - AI Passport Photo Maker
 Optimized for Google Cloud Run with preloaded AI models
 """
 
-from app import create_app
+# Set numba environment variables early to prevent cache issues
 import os
+os.environ.setdefault('NUMBA_DISABLE_JIT', '1')
+os.environ.setdefault('NUMBA_CACHE_DIR', '/tmp/.numba_cache')
+os.environ.setdefault('NUMBA_DISABLE_PERFORMANCE_WARNINGS', '1')
+
+from app import create_app
 import logging
 import time
 

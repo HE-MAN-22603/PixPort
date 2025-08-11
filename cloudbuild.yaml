@@ -45,7 +45,7 @@ steps:
       - '--concurrency=80'
       - '--timeout=300s'
       - '--execution-environment=gen2'
-      - '--set-env-vars=FLASK_ENV=production,SECRET_KEY=pixport-optimized-cloud-run-2024,PYTHONOPTIMIZE=1,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use'
+      - '--set-env-vars=FLASK_ENV=production,SECRET_KEY=pixport-optimized-cloud-run-2024,PYTHONOPTIMIZE=1,UPLOAD_FOLDER=/tmp/uploads,PROCESSED_FOLDER=/tmp/processed,REMBG_MODEL=isnet-general-use,NUMBA_DISABLE_JIT=1,NUMBA_CACHE_DIR=/tmp/.numba_cache,NUMBA_DISABLE_PERFORMANCE_WARNINGS=1'
       - '--cpu-boost'  # Enable CPU boost for faster cold starts
     waitFor: ['push-latest-image']
 

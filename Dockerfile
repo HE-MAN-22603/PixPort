@@ -32,6 +32,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8080
 ENV PYTHONPATH=/app
 
+# Fix pymatting/numba cache issues in containerized environment
+ENV NUMBA_DISABLE_JIT=1
+ENV NUMBA_CACHE_DIR=/tmp/.numba_cache
+ENV NUMBA_DISABLE_PERFORMANCE_WARNINGS=1
+
 # Install minimal runtime dependencies (ultra-compatible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -52,14 +57,14 @@ RUN python -c "import onnxruntime" || \
 # Set work directory first
 WORKDIR /app
 
-# Create necessary directories
-RUN mkdir -p /tmp/uploads /tmp/processed /app/logs
+# Create necessary directories including numba cache
+RUN mkdir -p /tmp/uploads /tmp/processed /app/logs /tmp/.numba_cache
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Set proper permissions for directories
-RUN chown -R appuser:appuser /tmp/uploads /tmp/processed /app
+# Set proper permissions for directories including numba cache
+RUN chown -R appuser:appuser /tmp/uploads /tmp/processed /tmp/.numba_cache /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/
