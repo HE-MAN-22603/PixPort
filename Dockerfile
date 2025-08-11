@@ -73,7 +73,7 @@ COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser wsgi.py ./
 COPY --chown=appuser:appuser app.py ./
 COPY --chown=appuser:appuser model_utils.py ./
-COPY --chown=appuser:appuser preload_models.py ./
+COPY --chown=appuser:appuser download_models.py ./
 COPY --chown=appuser:appuser requirements.txt ./
 
 # Copy configuration files
@@ -87,7 +87,7 @@ USER appuser
 # The optimized model_utils.py will handle fast loading on container startup
 
 # Preload AI models during build (optional - will continue if fails)
-RUN python preload_models.py || echo "Model preload failed, will load at runtime"
+RUN python download_models.py || echo "Model preload failed, will load at runtime"
 
 # Verify our optimization files are in place
 RUN echo "📝 Verifying optimization setup..." && \
